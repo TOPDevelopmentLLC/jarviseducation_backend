@@ -21,7 +21,7 @@ public class TenantProvisioningService {
     private SchoolRepository schoolRepository;
 
     @Autowired
-    private DataSourceRouter dataSourceRouter;
+    private DataSource dataSource;
 
     /**
      * Creates a new tenant (school) with its own database
@@ -32,7 +32,7 @@ public class TenantProvisioningService {
         // Sanitize school name for database usage
         String sanitizedName = sanitizeDatabaseName(schoolName);
         String dbName = "school_" + sanitizedName;
-        
+
         // Create the database
         createDatabase(dbName);
 
@@ -47,7 +47,9 @@ public class TenantProvisioningService {
 
         // Register the new datasource with the router
         DataSource newDataSource = createDataSource(jdbcUrl, dbUsername, dbPassword);
-        dataSourceRouter.addDataSource(school.getId().toString(), newDataSource);
+        if (dataSource instanceof DataSourceRouter) {
+            ((DataSourceRouter) dataSource).addDataSource(school.getId().toString(), newDataSource);
+        }
 
         // Initialize schema for the new tenant database
         initializeTenantSchema(jdbcUrl, dbUsername, dbPassword);

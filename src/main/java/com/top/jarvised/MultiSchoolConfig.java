@@ -6,59 +6,63 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.EventListener;
 
 import com.top.jarvised.Entities.School;
+import com.top.jarvised.Repositories.SchoolRepository;
 import com.zaxxer.hikari.HikariDataSource;
 
 @Configuration
 public class MultiSchoolConfig {
 
+    private DataSourceRouter routerInstance;
+
+    @Autowired
+    private SchoolRepository schoolRepository;
+
     /**
-     * Creates the master datasource first for loading school metadata
+     * Creates the routing datasource - initially empty
      */
-    @Bean(name = "masterDataSource")
-    public DataSource masterDataSource() {
-        return createDefaultDataSource();
+    @Bean
+    @Primary
+    public DataSource dataSource() {
+        Map<Object, Object> resolvedDataSources = new HashMap<>();
+
+        routerInstance = new DataSourceRouter();
+        routerInstance.setTargetDataSources(resolvedDataSources);
+        routerInstance.setDefaultTargetDataSource(createDefaultDataSource());
+        routerInstance.afterPropertiesSet();
+        return routerInstance;
     }
 
     /**
-     * Creates the routing datasource with all existing tenants loaded
+     * Load all existing tenants after application is fully initialized
      */
-    @Bean(name = "dataSource")
-    @DependsOn("masterDataSource")
-    public DataSource dataSource(DataSource masterDataSource) {
-        Map<Object, Object> resolvedDataSources = new HashMap<>();
+    @EventListener(ApplicationReadyEvent.class)
+    public void loadExistingTenants() {
+        try {
+            // Clear school context to ensure we query from master DB
+            SchoolContext.clear();
 
-        // Load all existing schools from the master database
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(masterDataSource);
-        List<School> schools = jdbcTemplate.query(
-            "SELECT id, school_name, db_url, db_username, db_password FROM schools",
-            (rs, rowNum) -> {
-                School school = new School();
-                school.setId(rs.getLong("id"));
-                school.setSchoolName(rs.getString("school_name"));
-                school.setDbUrl(rs.getString("db_url"));
-                school.setDbUsername(rs.getString("db_username"));
-                school.setDbPassword(rs.getString("db_password"));
-                return school;
+            List<School> schools = schoolRepository.findAll();
+
+            for (School school : schools) {
+                DataSource ds = createDataSource(school);
+                if (routerInstance != null) {
+                    routerInstance.addDataSource(school.getId().toString(), ds);
+                }
             }
-        );
 
-        // Register each school's datasource
-        for (School school : schools) {
-            DataSource ds = createDataSource(school);
-            resolvedDataSources.put(school.getId().toString(), ds);
+            System.out.println("Loaded " + schools.size() + " existing tenant(s)");
+        } catch (Exception e) {
+            System.err.println("Error loading existing tenants: " + e.getMessage());
+            // Continue startup even if loading fails
         }
-
-        DataSourceRouter router = new DataSourceRouter();
-        router.setTargetDataSources(resolvedDataSources);
-        router.setDefaultTargetDataSource(masterDataSource);
-        router.afterPropertiesSet();
-        return router;
     }
 
     /**

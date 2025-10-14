@@ -5,9 +5,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
-import org.springframework.stereotype.Component;
 
-@Component
 public class DataSourceRouter extends AbstractRoutingDataSource {
 
     private Map<Object, Object> targetDataSources;
