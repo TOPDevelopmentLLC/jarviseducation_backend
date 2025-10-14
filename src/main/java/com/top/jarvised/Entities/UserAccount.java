@@ -1,7 +1,5 @@
 package com.top.jarvised.Entities;
 
-import java.util.Optional;
-
 import com.top.jarvised.Enums.AccountType;
 
 import jakarta.persistence.Column;
