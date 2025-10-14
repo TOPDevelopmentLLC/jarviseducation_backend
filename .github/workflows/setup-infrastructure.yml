@@ -1,0 +1,363 @@
+name: Setup AWS Infrastructure
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      db_password:
+        description: 'RDS Master Password'
+        required: true
+        type: string
+      jwt_secret:
+        description: 'JWT Secret Key'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT_NAME: jarvised
+
+jobs:
+  setup-infrastructure:
+    name: Setup AWS Resources
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create ECR Repository
+        run: |
+          aws ecr describe-repositories \
+            --repository-names ${{ env.PROJECT_NAME }}-backend \
+            || aws ecr create-repository \
+            --repository-name ${{ env.PROJECT_NAME }}-backend \
+            --image-scanning-configuration scanOnPush=true
+
+      - name: Store DB Password in Secrets Manager
+        run: |
+          aws secretsmanager create-secret \
+            --name ${{ env.PROJECT_NAME }}/db-password \
+            --secret-string "${{ github.event.inputs.db_password }}" \
+            || aws secretsmanager update-secret \
+            --secret-id ${{ env.PROJECT_NAME }}/db-password \
+            --secret-string "${{ github.event.inputs.db_password }}"
+
+      - name: Store JWT Secret in Secrets Manager
+        run: |
+          aws secretsmanager create-secret \
+            --name ${{ env.PROJECT_NAME }}/jwt-secret \
+            --secret-string "${{ github.event.inputs.jwt_secret }}" \
+            || aws secretsmanager update-secret \
+            --secret-id ${{ env.PROJECT_NAME }}/jwt-secret \
+            --secret-string "${{ github.event.inputs.jwt_secret }}"
+
+      - name: Get Default VPC
+        id: vpc
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=isDefault,Values=true" \
+            --query "Vpcs[0].VpcId" \
+            --output text)
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+          
+          SUBNETS=$(aws ec2 describe-subnets \
+            --filters "Name=vpc-id,Values=$VPC_ID" \
+            --query "Subnets[*].SubnetId" \
+            --output text | tr '\t' ',')
+          echo "subnets=$SUBNETS" >> $GITHUB_OUTPUT
+
+      - name: Create Security Group for ECS
+        id: ecs-sg
+        run: |
+          SG_ID=$(aws ec2 create-security-group \
+            --group-name ${{ env.PROJECT_NAME }}-ecs-sg \
+            --description "Security group for JarvisEd ECS tasks" \
+            --vpc-id ${{ steps.vpc.outputs.vpc_id }} \
+            --query 'GroupId' \
+            --output text 2>/dev/null || \
+            aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=${{ env.PROJECT_NAME }}-ecs-sg" \
+            --query "SecurityGroups[0].GroupId" \
+            --output text)
+          
+          echo "sg_id=$SG_ID" >> $GITHUB_OUTPUT
+          
+          # Allow inbound HTTP
+          aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp \
+            --port 8080 \
+            --cidr 0.0.0.0/0 2>/dev/null || true
+
+      - name: Create Security Group for RDS
+        id: rds-sg
+        run: |
+          SG_ID=$(aws ec2 create-security-group \
+            --group-name ${{ env.PROJECT_NAME }}-rds-sg \
+            --description "Security group for JarvisEd RDS" \
+            --vpc-id ${{ steps.vpc.outputs.vpc_id }} \
+            --query 'GroupId' \
+            --output text 2>/dev/null || \
+            aws ec2 describe-security-groups \
+            --filters "Name=group-name,Values=${{ env.PROJECT_NAME }}-rds-sg" \
+            --query "SecurityGroups[0].GroupId" \
+            --output text)
+          
+          echo "sg_id=$SG_ID" >> $GITHUB_OUTPUT
+          
+          # Allow MySQL from ECS security group
+          aws ec2 authorize-security-group-ingress \
+            --group-id $SG_ID \
+            --protocol tcp \
+            --port 3306 \
+            --source-group ${{ steps.ecs-sg.outputs.sg_id }} 2>/dev/null || true
+
+      - name: Create RDS Subnet Group
+        run: |
+          SUBNETS="${{ steps.vpc.outputs.subnets }}"
+          aws rds create-db-subnet-group \
+            --db-subnet-group-name ${{ env.PROJECT_NAME }}-subnet-group \
+            --db-subnet-group-description "Subnet group for JarvisEd RDS" \
+            --subnet-ids ${SUBNETS//,/ } 2>/dev/null || \
+            echo "Subnet group already exists"
+
+      - name: Create RDS Instance
+        id: rds
+        run: |
+          aws rds create-db-instance \
+            --db-instance-identifier ${{ env.PROJECT_NAME }}-db \
+            --db-instance-class db.t3.micro \
+            --engine mysql \
+            --engine-version 8.0.35 \
+            --master-username admin \
+            --master-user-password "${{ github.event.inputs.db_password }}" \
+            --allocated-storage 20 \
+            --vpc-security-group-ids ${{ steps.rds-sg.outputs.sg_id }} \
+            --db-subnet-group-name ${{ env.PROJECT_NAME }}-subnet-group \
+            --publicly-accessible \
+            --backup-retention-period 7 \
+            --no-multi-az 2>/dev/null || \
+            echo "RDS instance already exists"
+          
+          echo "⏳ Waiting for RDS instance to be available (this takes 5-10 minutes)..."
+          aws rds wait db-instance-available \
+            --db-instance-identifier ${{ env.PROJECT_NAME }}-db
+          
+          ENDPOINT=$(aws rds describe-db-instances \
+            --db-instance-identifier ${{ env.PROJECT_NAME }}-db \
+            --query "DBInstances[0].Endpoint.Address" \
+            --output text)
+          
+          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
+          echo "✅ RDS instance ready at: $ENDPOINT"
+
+      - name: Create CloudWatch Log Group
+        run: |
+          aws logs create-log-group \
+            --log-group-name /ecs/${{ env.PROJECT_NAME }}-backend 2>/dev/null || \
+            echo "Log group already exists"
+
+      - name: Create ECS Cluster
+        run: |
+          aws ecs create-cluster \
+            --cluster-name ${{ env.PROJECT_NAME }}-cluster 2>/dev/null || \
+            echo "ECS cluster already exists"
+
+      - name: Create IAM Role for ECS Task Execution
+        id: ecs-role
+        run: |
+          ROLE_ARN=$(aws iam get-role \
+            --role-name ecsTaskExecutionRole \
+            --query 'Role.Arn' \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -z "$ROLE_ARN" ]; then
+            aws iam create-role \
+              --role-name ecsTaskExecutionRole \
+              --assume-role-policy-document '{
+                "Version": "2012-10-17",
+                "Statement": [{
+                  "Effect": "Allow",
+                  "Principal": {"Service": "ecs-tasks.amazonaws.com"},
+                  "Action": "sts:AssumeRole"
+                }]
+              }'
+            
+            aws iam attach-role-policy \
+              --role-name ecsTaskExecutionRole \
+              --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+            
+            aws iam attach-role-policy \
+              --role-name ecsTaskExecutionRole \
+              --policy-arn arn:aws:iam::aws:policy/SecretsManagerReadWrite
+            
+            sleep 10
+            
+            ROLE_ARN=$(aws iam get-role \
+              --role-name ecsTaskExecutionRole \
+              --query 'Role.Arn' \
+              --output text)
+          fi
+          
+          echo "role_arn=$ROLE_ARN" >> $GITHUB_OUTPUT
+
+      - name: Get AWS Account ID
+        id: account
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+
+      - name: Create ECS Task Definition
+        run: |
+          cat > task-definition.json << EOL
+          {
+            "family": "${{ env.PROJECT_NAME }}-backend",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "512",
+            "memory": "1024",
+            "executionRoleArn": "${{ steps.ecs-role.outputs.role_arn }}",
+            "containerDefinitions": [
+              {
+                "name": "${{ env.PROJECT_NAME }}-app",
+                "image": "${{ steps.account.outputs.account_id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-backend:latest",
+                "portMappings": [
+                  {
+                    "containerPort": 8080,
+                    "protocol": "tcp"
+                  }
+                ],
+                "environment": [
+                  {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "prod"
+                  },
+                  {
+                    "name": "DB_URL",
+                    "value": "jdbc:mysql://${{ steps.rds.outputs.endpoint }}:3306/master_db"
+                  },
+                  {
+                    "name": "DB_USERNAME",
+                    "value": "admin"
+                  }
+                ],
+                "secrets": [
+                  {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:${{ env.AWS_REGION }}:${{ steps.account.outputs.account_id }}:secret:${{ env.PROJECT_NAME }}/db-password"
+                  },
+                  {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:${{ env.AWS_REGION }}:${{ steps.account.outputs.account_id }}:secret:${{ env.PROJECT_NAME }}/jwt-secret"
+                  }
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "/ecs/${{ env.PROJECT_NAME }}-backend",
+                    "awslogs-region": "${{ env.AWS_REGION }}",
+                    "awslogs-stream-prefix": "ecs"
+                  }
+                }
+              }
+            ]
+          }
+          EOL
+          
+          aws ecs register-task-definition \
+            --cli-input-json file://task-definition.json
+
+      - name: Create Application Load Balancer
+        id: alb
+        run: |
+          SUBNETS="${{ steps.vpc.outputs.subnets }}"
+          
+          ALB_ARN=$(aws elbv2 create-load-balancer \
+            --name ${{ env.PROJECT_NAME }}-alb \
+            --subnets ${SUBNETS//,/ } \
+            --security-groups ${{ steps.ecs-sg.outputs.sg_id }} \
+            --scheme internet-facing \
+            --query "LoadBalancers[0].LoadBalancerArn" \
+            --output text 2>/dev/null || \
+            aws elbv2 describe-load-balancers \
+            --names ${{ env.PROJECT_NAME }}-alb \
+            --query "LoadBalancers[0].LoadBalancerArn" \
+            --output text)
+          
+          echo "alb_arn=$ALB_ARN" >> $GITHUB_OUTPUT
+          
+          DNS=$(aws elbv2 describe-load-balancers \
+            --load-balancer-arns $ALB_ARN \
+            --query "LoadBalancers[0].DNSName" \
+            --output text)
+          
+          echo "dns_name=$DNS" >> $GITHUB_OUTPUT
+
+      - name: Create Target Group
+        id: tg
+        run: |
+          TG_ARN=$(aws elbv2 create-target-group \
+            --name ${{ env.PROJECT_NAME }}-targets \
+            --protocol HTTP \
+            --port 8080 \
+            --vpc-id ${{ steps.vpc.outputs.vpc_id }} \
+            --target-type ip \
+            --health-check-path /actuator/health \
+            --health-check-interval-seconds 30 \
+            --health-check-timeout-seconds 5 \
+            --healthy-threshold-count 2 \
+            --unhealthy-threshold-count 3 \
+            --query "TargetGroups[0].TargetGroupArn" \
+            --output text 2>/dev/null || \
+            aws elbv2 describe-target-groups \
+            --names ${{ env.PROJECT_NAME }}-targets \
+            --query "TargetGroups[0].TargetGroupArn" \
+            --output text)
+          
+          echo "tg_arn=$TG_ARN" >> $GITHUB_OUTPUT
+
+      - name: Create ALB Listener
+        run: |
+          aws elbv2 create-listener \
+            --load-balancer-arn ${{ steps.alb.outputs.alb_arn }} \
+            --protocol HTTP \
+            --port 80 \
+            --default-actions Type=forward,TargetGroupArn=${{ steps.tg.outputs.tg_arn }} \
+            2>/dev/null || echo "Listener already exists"
+
+      - name: Create ECS Service
+        run: |
+          SUBNETS="${{ steps.vpc.outputs.subnets }}"
+          
+          aws ecs create-service \
+            --cluster ${{ env.PROJECT_NAME }}-cluster \
+            --service-name ${{ env.PROJECT_NAME }}-service \
+            --task-definition ${{ env.PROJECT_NAME }}-backend \
+            --desired-count 1 \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS//,/,}],securityGroups=[${{ steps.ecs-sg.outputs.sg_id }}],assignPublicIp=ENABLED}" \
+            --load-balancers "targetGroupArn=${{ steps.tg.outputs.tg_arn }},containerName=${{ env.PROJECT_NAME }}-app,containerPort=8080" \
+            2>/dev/null || echo "Service already exists - will be updated by deployment"
+
+      - name: Setup Complete
+        run: |
+          echo "🎉 Infrastructure setup complete!"
+          echo ""
+          echo "📋 Summary:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "RDS Endpoint: ${{ steps.rds.outputs.endpoint }}"
+          echo "Load Balancer: http://${{ steps.alb.outputs.dns_name }}"
+          echo "ECS Cluster: ${{ env.PROJECT_NAME }}-cluster"
+          echo "ECS Service: ${{ env.PROJECT_NAME }}-service"
+          echo ""
+          echo "⏭️  Next Steps:"
+          echo "1. Push code to main/master branch to trigger deployment"
+          echo "2. Monitor deployment in Actions tab"
+          echo "3. Access your API at: http://${{ steps.alb.outputs.dns_name }}"
