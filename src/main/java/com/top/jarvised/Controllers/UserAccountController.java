@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.top.jarvised.Entities.UserAccount;
@@ -30,8 +29,17 @@ public class UserAccountController {
     }
 
     @PostMapping("/sign-up")
-    public UserAccount createAccount(@RequestBody Map<String, String> signupRequest) {
-        return userAccountService.createAccount(signupRequest.get("email"), signupRequest.get("password"));
+    public ResponseEntity<Map<String, UserAccount>> createAccount(@RequestBody Map<String, String> signupRequest) {
+        String email = signupRequest.get("email");
+        String password = signupRequest.get("password");
+        String schoolName = signupRequest.get("schoolName");
+
+        if (schoolName == null || schoolName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", new UserAccount()));
+        }
+
+        UserAccount user = userAccountService.createAccount(email, password, schoolName);
+        return ResponseEntity.ok(Map.of("user", user));
     }
     
 }

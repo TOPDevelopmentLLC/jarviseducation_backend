@@ -38,30 +38,42 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         String username = null;
         String jwt = null;
+        Long schoolId = null;
 
         // Extract token if it starts with "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+                schoolId = jwtUtil.extractSchoolId(jwt);
             } catch (Exception e) {
                 logger.error("JWT token is invalid: " + e.getMessage());
             }
         }
 
-        // Validate token and set authentication
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserAccount user = userAccountRepository.findByEmail(username).orElse(null);
-
-            if (user != null && jwtUtil.validateToken(jwt, user.getEmail())) {
-                UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(user, null, List.of());
-
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
+        // Set school context from JWT for tenant routing
+        if (schoolId != null) {
+            SchoolContext.setSchool(schoolId.toString());
         }
 
-        filterChain.doFilter(request, response);
+        try {
+            // Validate token and set authentication
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserAccount user = userAccountRepository.findByEmail(username).orElse(null);
+
+                if (user != null && jwtUtil.validateToken(jwt, user.getEmail())) {
+                    UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(user, null, List.of());
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+
+            filterChain.doFilter(request, response);
+        } finally {
+            // Always clear school context after request
+            SchoolContext.clear();
+        }
     }
 }
 
