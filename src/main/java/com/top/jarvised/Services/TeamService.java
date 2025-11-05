@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -80,18 +81,22 @@ public class TeamService {
         // Create new team
         Team team = new Team(request.getName(), request.getDescription(), schoolId);
 
-        // Add members (only Teachers and Administrators)
+        // Add members (only Teachers, Administrators, and Master accounts)
+        List<String> invalidUsers = new ArrayList<>();
         if (request.getMemberIds() != null && !request.getMemberIds().isEmpty()) {
             List<UserAccount> members = userAccountRepository.findAllById(request.getMemberIds());
             for (UserAccount member : members) {
                 // Validate member belongs to same school
                 if (!member.getSchoolId().equals(schoolId)) {
-                    throw new RuntimeException("User " + member.getEmail() + " does not belong to this school");
+                    invalidUsers.add(member.getEmail() + " (does not belong to this school)");
+                    continue;
                 }
-                // Validate member is Teacher or Administrator
+                // Validate member is Teacher, Administrator, or Master
                 if (member.getAccountType() != AccountType.Teacher &&
-                    member.getAccountType() != AccountType.Administrator) {
-                    throw new RuntimeException("User " + member.getEmail() + " is not a Teacher or Administrator");
+                    member.getAccountType() != AccountType.Administrator &&
+                    member.getAccountType() != AccountType.Master) {
+                    invalidUsers.add(member.getEmail() + " (must be Teacher, Administrator, or Master)");
+                    continue;
                 }
                 team.addMember(member);
             }
@@ -104,6 +109,13 @@ public class TeamService {
         }
 
         team = teamRepository.save(team);
+
+        // Throw error if there were any invalid users
+        if (!invalidUsers.isEmpty()) {
+            throw new RuntimeException("Team created but the following users could not be added: " +
+                String.join(", ", invalidUsers));
+        }
+
         return new TeamResponse(team);
     }
 
@@ -124,17 +136,21 @@ public class TeamService {
         }
 
         // Add members
+        List<String> invalidUsers = new ArrayList<>();
         if (request.getAddMemberIds() != null && !request.getAddMemberIds().isEmpty()) {
             List<UserAccount> membersToAdd = userAccountRepository.findAllById(request.getAddMemberIds());
             for (UserAccount member : membersToAdd) {
                 // Validate member belongs to same school
                 if (!member.getSchoolId().equals(schoolId)) {
-                    throw new RuntimeException("User " + member.getEmail() + " does not belong to this school");
+                    invalidUsers.add(member.getEmail() + " (does not belong to this school)");
+                    continue;
                 }
-                // Validate member is Teacher or Administrator
+                // Validate member is Teacher, Administrator, or Master
                 if (member.getAccountType() != AccountType.Teacher &&
-                    member.getAccountType() != AccountType.Administrator) {
-                    throw new RuntimeException("User " + member.getEmail() + " is not a Teacher or Administrator");
+                    member.getAccountType() != AccountType.Administrator &&
+                    member.getAccountType() != AccountType.Master) {
+                    invalidUsers.add(member.getEmail() + " (must be Teacher, Administrator, or Master)");
+                    continue;
                 }
                 team.addMember(member);
             }
@@ -159,6 +175,13 @@ public class TeamService {
         }
 
         team = teamRepository.save(team);
+
+        // Throw error if there were any invalid users
+        if (!invalidUsers.isEmpty()) {
+            throw new RuntimeException("Team updated but the following users could not be added: " +
+                String.join(", ", invalidUsers));
+        }
+
         return new TeamResponse(team);
     }
 
