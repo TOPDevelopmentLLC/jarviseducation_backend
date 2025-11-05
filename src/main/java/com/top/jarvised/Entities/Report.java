@@ -4,16 +4,15 @@ import com.top.jarvised.Enums.MoodType;
 import com.top.jarvised.Enums.ReportType;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "reports")
 public class Report {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,6 +22,11 @@ public class Report {
     private MoodType moodType;
     private String reportedByName;
     private Long reportedById;
+
+    @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    public Report() {}
 
     public Report(ReportType reportType, String description, String reportedByName, Long reportedById, @Nullable MoodType moodType) {
         this.reportType = reportType;
@@ -53,5 +57,23 @@ public class Report {
     }
     public Long getReportedById() {
         return this.reportedById;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
+    }
+
+    public void addComment(Comment comment) {
+        comments.add(comment);
+        comment.setReport(this);
+    }
+
+    public void removeComment(Comment comment) {
+        comments.remove(comment);
+        comment.setReport(null);
     }
 }
