@@ -7,7 +7,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "user_accounts")
@@ -31,6 +35,9 @@ public class UserAccount {
     private boolean requiresPasswordReset = false;
 
     private String fullName;
+
+    @ManyToMany(mappedBy = "members")
+    private Set<Team> teams = new HashSet<>();
 
     public UserAccount() {}
 
@@ -115,6 +122,14 @@ public class UserAccount {
 
     public void setAccountType(AccountType accountType) {
         this.accountType = accountType;
+    }
+
+    public Set<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(Set<Team> teams) {
+        this.teams = teams;
     }
 
 }
