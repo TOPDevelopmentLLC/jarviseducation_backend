@@ -20,12 +20,19 @@ public class Comment {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    @Column(nullable = false)
+    private boolean edited = false;
+
+    @Column
+    private LocalDateTime lastEditedTimestamp;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id", nullable = false)
     private Report report;
 
     public Comment() {
         this.timestamp = LocalDateTime.now();
+        this.edited = false;
     }
 
     public Comment(String fullName, String bodyText, Report report) {
@@ -33,6 +40,7 @@ public class Comment {
         this.bodyText = bodyText;
         this.report = report;
         this.timestamp = LocalDateTime.now();
+        this.edited = false;
     }
 
     public Long getId() {
@@ -73,5 +81,21 @@ public class Comment {
 
     public void setReport(Report report) {
         this.report = report;
+    }
+
+    public boolean isEdited() {
+        return edited;
+    }
+
+    public void setEdited(boolean edited) {
+        this.edited = edited;
+    }
+
+    public LocalDateTime getLastEditedTimestamp() {
+        return lastEditedTimestamp;
+    }
+
+    public void setLastEditedTimestamp(LocalDateTime lastEditedTimestamp) {
+        this.lastEditedTimestamp = lastEditedTimestamp;
     }
 }
