@@ -27,6 +27,11 @@ public class UserAccount {
     @Column(nullable = false)
     private Long schoolId;
 
+    @Column(nullable = false)
+    private boolean requiresPasswordReset = false;
+
+    private String fullName;
+
     public UserAccount() {}
 
     public UserAccount(String newEmail, String newPassword, Long schoolId) {
@@ -44,6 +49,16 @@ public class UserAccount {
         this.accountType = accountType;
         this.token = "";
         this.schoolId = schoolId;
+    }
+
+    public UserAccount(String email, String password, AccountType accountType, Long schoolId, String fullName) {
+        this.email = email;
+        this.password = password;
+        this.accountType = accountType;
+        this.token = "";
+        this.schoolId = schoolId;
+        this.fullName = fullName;
+        this.requiresPasswordReset = true;
     }
 
     public Long getId() {
@@ -72,6 +87,34 @@ public class UserAccount {
 
     public void setSchoolId(Long schoolId) {
         this.schoolId = schoolId;
+    }
+
+    public String getToken() {
+        return this.token;
+    }
+
+    public boolean getRequiresPasswordReset() {
+        return this.requiresPasswordReset;
+    }
+
+    public void setRequiresPasswordReset(boolean requiresPasswordReset) {
+        this.requiresPasswordReset = requiresPasswordReset;
+    }
+
+    public String getFullName() {
+        return this.fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setAccountType(AccountType accountType) {
+        this.accountType = accountType;
     }
 
 }
