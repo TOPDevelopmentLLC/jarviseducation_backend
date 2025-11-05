@@ -1,5 +1,6 @@
 package com.top.jarvised.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.top.jarvised.Enums.MoodType;
 import com.top.jarvised.Enums.ReportType;
 
@@ -23,6 +24,7 @@ public class Report {
     private String reportedByName;
     private Long reportedById;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
