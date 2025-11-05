@@ -164,11 +164,21 @@ public class TeamService {
 
     /**
      * Delete a team
+     * Automatically removes the team from all related codes
      */
     @Transactional
     public void deleteTeam(Long teamId, Long schoolId) {
         Team team = teamRepository.findByIdAndSchoolId(teamId, schoolId)
             .orElseThrow(() -> new RuntimeException("Team not found"));
+
+        // Remove this team from all codes it's assigned to
+        team.getCodes().forEach(code -> code.getTeams().remove(team));
+
+        // Clear members and codes collections
+        team.getMembers().clear();
+        team.getCodes().clear();
+
+        // Now delete the team
         teamRepository.delete(team);
     }
 }

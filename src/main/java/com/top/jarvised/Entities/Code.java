@@ -1,11 +1,8 @@
 package com.top.jarvised.Entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "codes")
@@ -19,6 +16,9 @@ public class Code {
     private String code;
 
     private String description;
+
+    @ManyToMany(mappedBy = "codes")
+    private Set<Team> teams = new HashSet<>();
 
     public Code() {}
 
@@ -49,5 +49,13 @@ public class Code {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Set<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(Set<Team> teams) {
+        this.teams = teams;
     }
 }

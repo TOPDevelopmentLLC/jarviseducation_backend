@@ -69,11 +69,17 @@ public class CodeService {
 
     /**
      * Delete a code
+     * Automatically removes the code from all teams it's assigned to
      */
     @Transactional
     public void deleteCode(Long codeId) {
         Code code = codeRepository.findById(codeId)
             .orElseThrow(() -> new RuntimeException("Code not found"));
+
+        // Remove this code from all teams it's assigned to
+        code.getTeams().forEach(team -> team.removeCode(code));
+
+        // Now delete the code
         codeRepository.delete(code);
     }
 }
