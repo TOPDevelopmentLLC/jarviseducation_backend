@@ -24,6 +24,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/login", "/auth/sign-up").permitAll()
                 .requestMatchers("/h2-console/**").permitAll() // H2 console for dev profile only
+                .requestMatchers("/health", "/info").permitAll() // Health check for EB
                 .requestMatchers("/auth/admin/**", "/auth/change-password").authenticated()
                 .anyRequest().authenticated()
             )
