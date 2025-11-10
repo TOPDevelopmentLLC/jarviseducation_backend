@@ -7,6 +7,7 @@ import java.sql.Statement;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.top.jarvised.DataSourceRouter;
@@ -23,6 +24,21 @@ public class TenantProvisioningService {
     @Autowired
     private DataSource dataSource;
 
+    @Value("${spring.datasource.url}")
+    private String masterDbUrl;
+
+    @Value("${spring.datasource.username}")
+    private String dbUsername;
+
+    @Value("${spring.datasource.password}")
+    private String dbPassword;
+
+    @Value("${spring.datasource.hikari.maximum-pool-size}")
+    private int maxPoolSize;
+
+    @Value("${spring.datasource.hikari.minimum-idle}")
+    private int minIdle;
+
     /**
      * Creates a new tenant (school) with its own database
      * @param schoolName Unique school identifier
@@ -36,10 +52,9 @@ public class TenantProvisioningService {
         // Create the database
         createDatabase(dbName);
 
-        // Build JDBC URL
-        String jdbcUrl = "jdbc:mysql://localhost:3306/" + dbName;
-        String dbUsername = "root";
-        String dbPassword = "secret";
+        // Build JDBC URL - extract base URL from master URL
+        String baseUrl = masterDbUrl.substring(0, masterDbUrl.lastIndexOf('/'));
+        String jdbcUrl = baseUrl + "/" + dbName;
 
         // Save school to master database
         School school = new School(schoolName, jdbcUrl, dbUsername, dbPassword);
@@ -61,17 +76,16 @@ public class TenantProvisioningService {
      * Creates a MySQL database for the tenant
      */
     private void createDatabase(String dbName) {
-        String masterUrl = "jdbc:mysql://localhost:3306/";
-        String username = "root";
-        String password = "secret";
+        // Extract base URL without database name
+        String baseUrl = masterDbUrl.substring(0, masterDbUrl.lastIndexOf('/')) + "/";
 
-        try (Connection conn = DriverManager.getConnection(masterUrl, username, password);
+        try (Connection conn = DriverManager.getConnection(baseUrl, dbUsername, dbPassword);
              Statement stmt = conn.createStatement()) {
-            
+
             // Create database if it doesn't exist
-            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + dbName + 
+            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS " + dbName +
                              " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to create database for tenant: " + dbName, e);
         }
@@ -96,8 +110,8 @@ public class TenantProvisioningService {
         ds.setUsername(username);
         ds.setPassword(password);
         ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        ds.setMaximumPoolSize(10);
-        ds.setMinimumIdle(2);
+        ds.setMaximumPoolSize(maxPoolSize);
+        ds.setMinimumIdle(minIdle);
         return ds;
     }
 
