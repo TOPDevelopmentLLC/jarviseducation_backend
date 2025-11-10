@@ -23,9 +23,11 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/login", "/auth/sign-up").permitAll()
+                .requestMatchers("/h2-console/**").permitAll() // H2 console for dev profile only
                 .requestMatchers("/auth/admin/**", "/auth/change-password").authenticated()
                 .anyRequest().authenticated()
             )
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin())) // Allow H2 console iframe
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
