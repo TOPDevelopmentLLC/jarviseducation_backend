@@ -2,6 +2,7 @@ package com.top.jarvised;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,7 +23,8 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/login", "/auth/sign-up").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/sign-up").permitAll()
                 .requestMatchers("/h2-console/**").permitAll() // H2 console for dev profile only
                 .requestMatchers("/health", "/info").permitAll() // Health check for EB
                 .requestMatchers("/auth/admin/**", "/auth/change-password").authenticated()
