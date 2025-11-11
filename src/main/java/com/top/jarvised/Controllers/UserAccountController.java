@@ -37,6 +37,11 @@ public class UserAccountController {
         return ResponseEntity.ok(Map.of("version", "2.0-shouldNotFilter-added"));
     }
 
+    @GetMapping("/test-sign-up")
+    public ResponseEntity<?> testSignUp() {
+        return ResponseEntity.ok(Map.of("message", "If you see this, GET requests work for sign-up path"));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> attemptLogin(@RequestBody Map<String, String> loginRequest) {
         try {
