@@ -31,7 +31,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
         // Skip filter for public authentication endpoints
-        return path.equals("/auth/login") || path.equals("/auth/sign-up");
+        return path.equals("/auth/login") || path.equals("/auth/sign-up") || path.equals("/auth/version");
     }
 
     @Override
