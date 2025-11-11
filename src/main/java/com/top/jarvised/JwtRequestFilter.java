@@ -56,8 +56,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         try {
-            // Validate token and set authentication
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Only validate token and set authentication if JWT was present
+            if (username != null && jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserAccount user = userAccountRepository.findByEmail(username).orElse(null);
 
                 if (user != null && jwtUtil.validateToken(jwt, user.getEmail())) {
