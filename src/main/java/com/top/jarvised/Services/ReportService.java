@@ -1,9 +1,11 @@
 package com.top.jarvised.Services;
 
 import com.top.jarvised.DTOs.AddCommentRequest;
+import com.top.jarvised.DTOs.CreateReportRequest;
 import com.top.jarvised.DTOs.EditCommentRequest;
 import com.top.jarvised.Entities.Comment;
 import com.top.jarvised.Entities.Report;
+import com.top.jarvised.Enums.ReportType;
 import com.top.jarvised.Repositories.CommentRepository;
 import com.top.jarvised.Repositories.ReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,5 +88,48 @@ public class ReportService {
         comment.setLastEditedTimestamp(LocalDateTime.now());
 
         return commentRepository.save(comment);
+    }
+
+    /**
+     * Get all reports
+     */
+    public List<Report> getAllReports() {
+        return reportRepository.findAll();
+    }
+
+    /**
+     * Create a new report
+     */
+    @Transactional
+    public Report createReport(CreateReportRequest request) {
+        // Validate request
+        if (request.getReportType() == null) {
+            throw new IllegalArgumentException("Report type is required");
+        }
+        if (request.getDescription() == null || request.getDescription().trim().isEmpty()) {
+            throw new IllegalArgumentException("Description is required");
+        }
+        if (request.getReportedByName() == null || request.getReportedByName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Reported by name is required");
+        }
+        if (request.getReportedById() == null) {
+            throw new IllegalArgumentException("Reported by ID is required");
+        }
+
+        // Validate moodType is provided when reportType is Mood
+        if (request.getReportType() == ReportType.Mood && request.getMoodType() == null) {
+            throw new IllegalArgumentException("Mood type is required for Mood reports");
+        }
+
+        // Create and save report
+        Report report = new Report(
+            request.getReportType(),
+            request.getDescription(),
+            request.getReportedByName(),
+            request.getReportedById(),
+            request.getMoodType()
+        );
+
+        return reportRepository.save(report);
     }
 }
