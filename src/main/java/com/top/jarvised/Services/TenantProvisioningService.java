@@ -120,9 +120,11 @@ public class TenantProvisioningService {
      */
     private String sanitizeDatabaseName(String schoolName) {
         // Remove special characters and replace spaces with underscores
-        return schoolName.toLowerCase()
+        String sanitized = schoolName.toLowerCase()
                         .replaceAll("[^a-z0-9_]", "")
-                        .replaceAll("\\s+", "_")
-                        .substring(0, Math.min(schoolName.length(), 50));
+                        .replaceAll("\\s+", "_");
+
+        // Limit to 50 characters using the sanitized length
+        return sanitized.substring(0, Math.min(sanitized.length(), 50));
     }
 }
