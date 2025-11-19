@@ -26,4 +26,11 @@ public class ClassCatalogueService {
         return classCatalogueRepository.save(classCatalogue);
     }
 
+    public void deleteClass(Long id) {
+        if (!classCatalogueRepository.existsById(id)) {
+            throw new RuntimeException("Course not found with id: " + id);
+        }
+        classCatalogueRepository.deleteById(id);
+    }
+
 }
