@@ -62,17 +62,23 @@ public class UserAccountController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity<Map<String, UserAccount>> createAccount(@RequestBody Map<String, String> signupRequest) {
-        String email = signupRequest.get("email");
-        String password = signupRequest.get("password");
-        String schoolName = signupRequest.get("schoolName");
+    public ResponseEntity<?> createAccount(@RequestBody Map<String, String> signupRequest) {
+        try {
+            String email = signupRequest.get("email");
+            String password = signupRequest.get("password");
+            String schoolName = signupRequest.get("schoolName");
 
-        if (schoolName == null || schoolName.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", new UserAccount()));
+            if (schoolName == null || schoolName.trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "School name is required"));
+            }
+
+            UserAccount user = userAccountService.createAccount(email, password, schoolName);
+            return ResponseEntity.ok(Map.of("user", user));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Sign up failed: " + e.getMessage()));
         }
-
-        UserAccount user = userAccountService.createAccount(email, password, schoolName);
-        return ResponseEntity.ok(Map.of("user", user));
     }
 
     /**
