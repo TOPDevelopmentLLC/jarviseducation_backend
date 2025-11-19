@@ -1,5 +1,6 @@
 package com.top.jarvised.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.top.jarvised.Enums.AccountType;
 
 import jakarta.persistence.Column;
@@ -124,6 +125,7 @@ public class UserAccount {
         this.accountType = accountType;
     }
 
+    @JsonIgnore
     public Set<Team> getTeams() {
         return teams;
     }
