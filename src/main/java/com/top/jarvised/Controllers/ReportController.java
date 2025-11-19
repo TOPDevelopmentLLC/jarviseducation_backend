@@ -1,8 +1,10 @@
 package com.top.jarvised.Controllers;
 
 import com.top.jarvised.DTOs.AddCommentRequest;
+import com.top.jarvised.DTOs.CreateReportRequest;
 import com.top.jarvised.DTOs.EditCommentRequest;
 import com.top.jarvised.Entities.Comment;
+import com.top.jarvised.Entities.Report;
 import com.top.jarvised.JwtUtil;
 import com.top.jarvised.Services.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,57 @@ public class ReportController {
     public ReportController(ReportService reportService, JwtUtil jwtUtil) {
         this.reportService = reportService;
         this.jwtUtil = jwtUtil;
+    }
+
+    /**
+     * Get all reports
+     */
+    @GetMapping
+    public ResponseEntity<?> getAllReports(@RequestHeader("Authorization") String authHeader) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long schoolId = jwtUtil.extractSchoolId(token);
+
+            if (schoolId == null) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid token: missing school ID"));
+            }
+
+            List<Report> reports = reportService.getAllReports();
+            return ResponseEntity.ok(Map.of("reports", reports));
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Failed to fetch reports: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Create a new report
+     */
+    @PostMapping
+    public ResponseEntity<?> createReport(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody CreateReportRequest request) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long schoolId = jwtUtil.extractSchoolId(token);
+
+            if (schoolId == null) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid token: missing school ID"));
+            }
+
+            Report report = reportService.createReport(request);
+            return ResponseEntity.ok(Map.of("report", report));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Failed to create report: " + e.getMessage()));
+        }
     }
 
     /**
