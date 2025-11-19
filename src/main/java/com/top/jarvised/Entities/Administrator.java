@@ -1,6 +1,8 @@
 package com.top.jarvised.Entities;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -9,13 +11,13 @@ import jakarta.persistence.Table;
 public class Administrator {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
 
     public Administrator() {}
 
-    public Administrator(Long id, String name) {
-        this.id = id;
+    public Administrator(String name) {
         this.name = name;
     }
 

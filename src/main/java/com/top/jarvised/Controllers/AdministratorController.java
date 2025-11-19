@@ -24,13 +24,10 @@ public class AdministratorController {
 
     @PostMapping("/administrator")
     public Administrator createAdministrator(@RequestBody Map<String, String> postRequest) {
-        if (!postRequest.containsKey("id")) {
-            throw new RuntimeException("Request is missing a valid id property");
-        }
         if (!postRequest.containsKey("name")) {
             throw new RuntimeException("Request is missing the name property");
         }
-        return administratorService.createAdministrator(postRequest.get("id"), postRequest.get("name"));
+        return administratorService.createAdministrator(postRequest.get("name"));
     }
 
     @GetMapping("/administrators")

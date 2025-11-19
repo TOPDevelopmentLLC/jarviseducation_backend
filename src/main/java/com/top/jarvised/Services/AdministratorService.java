@@ -22,13 +22,8 @@ public class AdministratorService {
         return administratorRepository.findAll();
     }
 
-    public Administrator createAdministrator(String id, String name) {
-        try {
-            Long.parseLong(id);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("Request is missing a valid id property");
-        }
-        return administratorRepository.save(new Administrator(Long.valueOf(id), name));
+    public Administrator createAdministrator(String name) {
+        return administratorRepository.save(new Administrator(name));
     }
     
 }
