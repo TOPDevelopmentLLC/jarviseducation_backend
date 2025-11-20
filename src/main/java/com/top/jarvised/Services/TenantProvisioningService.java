@@ -128,11 +128,10 @@ public class TenantProvisioningService {
             """;
 
         String createClassCatalogueTable = """
-            CREATE TABLE IF NOT EXISTS class_catalogue (
+            CREATE TABLE IF NOT EXISTS courses (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 course_name VARCHAR(255),
-                course_code VARCHAR(100),
-                description TEXT
+                course_description TEXT
             )
             """;
 
