@@ -143,4 +143,19 @@ public class UserAccountController {
         }
     }
 
+    /**
+     * DEVELOPMENT ONLY: Cleanup endpoint to remove all users and tenant databases
+     * WARNING: This should be removed or secured before production use
+     */
+    @PostMapping("/admin/cleanup-all")
+    public ResponseEntity<?> cleanupAll() {
+        try {
+            userAccountService.deleteAllUsersAndTenants();
+            return ResponseEntity.ok(Map.of("message", "All users and tenant databases deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", "Failed to cleanup: " + e.getMessage()));
+        }
+    }
+
 }

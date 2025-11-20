@@ -207,4 +207,27 @@ public class UserAccountService {
 
         return user;
     }
+
+    /**
+     * DEVELOPMENT ONLY: Deletes all users and their associated tenant databases
+     * WARNING: This is a destructive operation and should only be used in development
+     */
+    @Transactional
+    public void deleteAllUsersAndTenants() {
+        // Clear context to work with master DB
+        SchoolContext.clear();
+
+        // Get all schools first (so we can drop their databases)
+        List<School> schools = schoolRepository.findAll();
+
+        // Delete all user accounts
+        userAccountRepository.deleteAll();
+
+        // Delete all schools and their databases
+        for (School school : schools) {
+            tenantProvisioningService.dropTenantDatabase(school);
+        }
+
+        schoolRepository.deleteAll();
+    }
 }

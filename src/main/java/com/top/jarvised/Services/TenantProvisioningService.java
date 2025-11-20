@@ -223,4 +223,27 @@ public class TenantProvisioningService {
         // Limit to 50 characters using the sanitized length
         return sanitized.substring(0, Math.min(sanitized.length(), 50));
     }
+
+    /**
+     * DEVELOPMENT ONLY: Drops a tenant database
+     * WARNING: This is a destructive operation
+     */
+    public void dropTenantDatabase(School school) {
+        // Extract database name from JDBC URL
+        String jdbcUrl = school.getDbUrl();
+        String dbName = jdbcUrl.substring(jdbcUrl.lastIndexOf('/') + 1);
+
+        // Extract base URL without database name
+        String baseUrl = masterDbUrl.substring(0, masterDbUrl.lastIndexOf('/')) + "/";
+
+        try (Connection conn = DriverManager.getConnection(baseUrl, dbUsername, dbPassword);
+             Statement stmt = conn.createStatement()) {
+
+            // Drop the database
+            stmt.executeUpdate("DROP DATABASE IF EXISTS " + dbName);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to drop database for tenant: " + dbName, e);
+        }
+    }
 }
