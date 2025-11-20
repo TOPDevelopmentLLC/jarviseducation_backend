@@ -57,9 +57,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwt);
                 schoolId = jwtUtil.extractSchoolId(jwt);
+                logger.info("JWT extracted - username: " + username + ", schoolId: " + schoolId);
             } catch (Exception e) {
-                logger.error("JWT token is invalid: " + e.getMessage());
+                logger.error("JWT token is invalid: " + e.getMessage(), e);
             }
+        } else {
+            logger.warn("No Authorization header or invalid format. Header: " + authHeader);
         }
 
         try {
@@ -69,11 +72,19 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 SchoolContext.clear(); // Ensure we query master DB for user accounts
                 UserAccount user = userAccountRepository.findByEmail(username).orElse(null);
 
-                if (user != null && jwtUtil.validateToken(jwt, user.getEmail())) {
-                    UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(user, null, List.of());
+                if (user != null) {
+                    logger.info("User found in database: " + user.getEmail());
+                    if (jwtUtil.validateToken(jwt, user.getEmail())) {
+                        UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(user, null, List.of());
 
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                        logger.info("Authentication successful for user: " + username);
+                    } else {
+                        logger.error("JWT validation failed for user: " + username);
+                    }
+                } else {
+                    logger.error("User not found in database: " + username);
                 }
             }
 
