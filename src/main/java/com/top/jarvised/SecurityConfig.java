@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/auth/test-sign-up").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/auth/sign-up").permitAll()
+                .requestMatchers(HttpMethod.POST, "/auth/admin/cleanup-all").permitAll() // DEV ONLY - Remove in production
                 .requestMatchers("/h2-console/**").permitAll() // H2 console for dev profile only
                 .requestMatchers("/health", "/info").permitAll() // Health check for EB
                 .requestMatchers("/auth/admin/**", "/auth/change-password").authenticated()

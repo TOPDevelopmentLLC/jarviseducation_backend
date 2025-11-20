@@ -219,15 +219,23 @@ public class UserAccountService {
 
         // Get all schools first (so we can drop their databases)
         List<School> schools = schoolRepository.findAll();
+        System.out.println("Found " + schools.size() + " schools to delete");
+
+        // Get user count before deletion
+        long userCount = userAccountRepository.count();
+        System.out.println("Found " + userCount + " users to delete");
 
         // Delete all user accounts
         userAccountRepository.deleteAll();
+        System.out.println("Deleted all user accounts");
 
         // Delete all schools and their databases
         for (School school : schools) {
+            System.out.println("Dropping database for school: " + school.getSchoolName());
             tenantProvisioningService.dropTenantDatabase(school);
         }
 
         schoolRepository.deleteAll();
+        System.out.println("Cleanup completed successfully");
     }
 }
