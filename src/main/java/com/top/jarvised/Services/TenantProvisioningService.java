@@ -96,9 +96,105 @@ public class TenantProvisioningService {
      * This will create all necessary tables via Hibernate auto-create
      */
     private void initializeTenantSchema(String jdbcUrl, String username, String password) {
-        // Note: With spring.jpa.hibernate.ddl-auto=update, tables will be created
-        // automatically when the datasource is first accessed
-        // You could also run migration scripts here if needed
+        // Create SQL statements for all tables
+        String createAdminsTable = """
+            CREATE TABLE IF NOT EXISTS admins (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255)
+            )
+            """;
+
+        String createParentsTable = """
+            CREATE TABLE IF NOT EXISTS parents (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255)
+            )
+            """;
+
+        String createStudentsTable = """
+            CREATE TABLE IF NOT EXISTS students (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255),
+                grade VARCHAR(50)
+            )
+            """;
+
+        String createTeachersTable = """
+            CREATE TABLE IF NOT EXISTS teachers (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255),
+                subject VARCHAR(255)
+            )
+            """;
+
+        String createClassCatalogueTable = """
+            CREATE TABLE IF NOT EXISTS class_catalogue (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                course_name VARCHAR(255),
+                course_code VARCHAR(100),
+                description TEXT
+            )
+            """;
+
+        String createReportsTable = """
+            CREATE TABLE IF NOT EXISTS reports (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                report_type VARCHAR(50),
+                description TEXT,
+                reported_by_name VARCHAR(255),
+                reported_by_id BIGINT,
+                mood_type VARCHAR(50),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """;
+
+        String createCommentsTable = """
+            CREATE TABLE IF NOT EXISTS comments (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                body_text TEXT,
+                posted_by_name VARCHAR(255),
+                posted_by_id BIGINT,
+                report_id BIGINT,
+                is_edited BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                last_edited_timestamp TIMESTAMP NULL,
+                FOREIGN KEY (report_id) REFERENCES reports(id)
+            )
+            """;
+
+        String createTeamsTable = """
+            CREATE TABLE IF NOT EXISTS teams (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                team_name VARCHAR(255),
+                team_lead_id BIGINT
+            )
+            """;
+
+        String createUserAccountTeamsTable = """
+            CREATE TABLE IF NOT EXISTS user_account_teams (
+                user_account_id BIGINT,
+                team_id BIGINT,
+                PRIMARY KEY (user_account_id, team_id)
+            )
+            """;
+
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
+             Statement stmt = conn.createStatement()) {
+
+            // Execute all CREATE TABLE statements
+            stmt.executeUpdate(createAdminsTable);
+            stmt.executeUpdate(createParentsTable);
+            stmt.executeUpdate(createStudentsTable);
+            stmt.executeUpdate(createTeachersTable);
+            stmt.executeUpdate(createClassCatalogueTable);
+            stmt.executeUpdate(createReportsTable);
+            stmt.executeUpdate(createCommentsTable);
+            stmt.executeUpdate(createTeamsTable);
+            stmt.executeUpdate(createUserAccountTeamsTable);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize schema for tenant database: " + jdbcUrl, e);
+        }
     }
 
     /**
