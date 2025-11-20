@@ -25,5 +25,12 @@ public class TeacherService {
     public Teacher createTeacher(Teacher teacher) {
         return teacherRepository.save(teacher);
     }
-    
+
+    public void deleteTeacher(Long id) {
+        if (!teacherRepository.existsById(id)) {
+            throw new RuntimeException("Teacher not found with id: " + id);
+        }
+        teacherRepository.deleteById(id);
+    }
+
 }

@@ -26,4 +26,11 @@ public class ParentService {
         return parentRepository.save(parent);
     }
 
+    public void deleteParent(Long id) {
+        if (!parentRepository.existsById(id)) {
+            throw new RuntimeException("Parent not found with id: " + id);
+        }
+        parentRepository.deleteById(id);
+    }
+
 }
