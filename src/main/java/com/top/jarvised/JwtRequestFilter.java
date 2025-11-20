@@ -30,8 +30,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        // Skip filter for public authentication endpoints
-        return path.equals("/auth/login") || path.equals("/auth/sign-up") || path.equals("/auth/version");
+        // Skip filter for public authentication and health check endpoints
+        return path.equals("/auth/login")
+            || path.equals("/auth/sign-up")
+            || path.equals("/auth/version")
+            || path.equals("/auth/test-sign-up")
+            || path.equals("/health")
+            || path.equals("/info");
     }
 
     @Override
@@ -57,14 +62,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
 
-        // Set school context from JWT for tenant routing
-        if (schoolId != null) {
-            SchoolContext.setSchool(schoolId.toString());
-        }
-
         try {
             // Only validate token and set authentication if JWT was present
+            // IMPORTANT: User lookup must happen with NO SchoolContext (queries master DB)
             if (username != null && jwt != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                SchoolContext.clear(); // Ensure we query master DB for user accounts
                 UserAccount user = userAccountRepository.findByEmail(username).orElse(null);
 
                 if (user != null && jwtUtil.validateToken(jwt, user.getEmail())) {
@@ -73,6 +75,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
+            }
+
+            // Set school context from JWT for tenant routing AFTER authentication
+            if (schoolId != null) {
+                SchoolContext.setSchool(schoolId.toString());
             }
 
             filterChain.doFilter(request, response);
