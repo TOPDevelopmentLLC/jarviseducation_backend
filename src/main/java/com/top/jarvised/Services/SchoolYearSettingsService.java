@@ -145,13 +145,10 @@ public class SchoolYearSettingsService {
     }
 
     @Transactional
-    public SchoolYearSettingsResponse updateSettings(Long id, UpdateSchoolYearSettingsRequest request,
-                                                      Long schoolId) {
-        SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(id, schoolId)
-            .orElseThrow(() -> new RuntimeException("School year settings not found"));
-
-        // Only active settings can be modified
-        validateActiveSettings(settings);
+    public SchoolYearSettingsResponse updateActiveSettings(UpdateSchoolYearSettingsRequest request,
+                                                            Long schoolId) {
+        SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
+            .orElseThrow(() -> new RuntimeException("No active school year settings found"));
 
         if (request.getName() != null) {
             settings.setName(request.getName());
@@ -172,10 +169,6 @@ public class SchoolYearSettingsService {
         }
         if (request.getTimezone() != null) {
             settings.setTimezone(request.getTimezone());
-        }
-        if (request.getIsActive() != null && request.getIsActive() && !settings.isActive()) {
-            deactivateCurrentSettings(schoolId);
-            settings.setActive(true);
         }
 
         settings = settingsRepository.save(settings);

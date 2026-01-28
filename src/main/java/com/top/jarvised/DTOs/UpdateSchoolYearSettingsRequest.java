@@ -11,7 +11,6 @@ public class UpdateSchoolYearSettingsRequest {
     private LocalTime schoolDayStart;
     private LocalTime schoolDayEnd;
     private String timezone;
-    private Boolean isActive;
 
     public UpdateSchoolYearSettingsRequest() {}
 
@@ -69,13 +68,5 @@ public class UpdateSchoolYearSettingsRequest {
 
     public void setTimezone(String timezone) {
         this.timezone = timezone;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
     }
 }

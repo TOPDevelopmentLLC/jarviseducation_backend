@@ -100,12 +100,11 @@ public class SchoolYearSettingsController {
     }
 
     /**
-     * Update school year settings (only active settings can be updated)
+     * Update the active school year settings
      */
-    @PutMapping("/{settingsId}")
+    @PutMapping
     public ResponseEntity<?> updateSettings(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @RequestBody UpdateSchoolYearSettingsRequest request) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -116,7 +115,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            SchoolYearSettingsResponse settings = settingsService.updateSettings(settingsId, request, schoolId);
+            SchoolYearSettingsResponse settings = settingsService.updateActiveSettings(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
         } catch (IllegalArgumentException e) {
