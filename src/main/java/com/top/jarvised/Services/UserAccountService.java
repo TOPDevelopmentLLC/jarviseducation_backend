@@ -9,9 +9,12 @@ import com.top.jarvised.SchoolContext;
 import com.top.jarvised.DTOs.CreateUserRequest;
 import com.top.jarvised.DTOs.UserCreationResult;
 import com.top.jarvised.Entities.School;
+import com.top.jarvised.Entities.SchoolYearSettings;
 import com.top.jarvised.Entities.UserAccount;
 import com.top.jarvised.Enums.AccountType;
+import com.top.jarvised.Enums.TermType;
 import com.top.jarvised.Repositories.SchoolRepository;
+import com.top.jarvised.Repositories.SchoolYearSettingsRepository;
 import com.top.jarvised.Repositories.UserAccountRepository;
 
 import java.security.SecureRandom;
@@ -25,6 +28,7 @@ public class UserAccountService {
     private JwtUtil jwtUtil;
     private TenantProvisioningService tenantProvisioningService;
     private SchoolRepository schoolRepository;
+    private SchoolYearSettingsRepository schoolYearSettingsRepository;
 
     private static final String DEFAULT_PASSWORD = "TempPass123!";
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
@@ -35,11 +39,13 @@ public class UserAccountService {
             UserAccountRepository userAccountRepository,
             JwtUtil jwtUtil,
             TenantProvisioningService tenantProvisioningService,
-            SchoolRepository schoolRepository) {
+            SchoolRepository schoolRepository,
+            SchoolYearSettingsRepository schoolYearSettingsRepository) {
         this.userAccountRepository = userAccountRepository;
         this.jwtUtil = jwtUtil;
         this.tenantProvisioningService = tenantProvisioningService;
         this.schoolRepository = schoolRepository;
+        this.schoolYearSettingsRepository = schoolYearSettingsRepository;
     }
 
     /**
@@ -84,11 +90,41 @@ public class UserAccountService {
 
         user = userAccountRepository.save(user);
 
+        // Create default school year settings for the new school
+        createDefaultSchoolYearSettings(school.getId());
+
         // Generate JWT with schoolId
         String token = jwtUtil.generateToken(user.getEmail(), user.getSchoolId());
         user.setToken(token);
 
         return user;
+    }
+
+    /**
+     * Creates a default school year settings with empty dates (to be configured by admin)
+     * This is set as active since it's the first/only school year
+     * @param schoolId The school ID to create settings for
+     */
+    private void createDefaultSchoolYearSettings(Long schoolId) {
+        // Determine school year name based on current date
+        java.time.LocalDate now = java.time.LocalDate.now();
+        int startYear = now.getMonthValue() >= 7 ? now.getYear() : now.getYear() - 1;
+        String yearName = startYear + "-" + (startYear + 1) + " School Year";
+
+        SchoolYearSettings settings = new SchoolYearSettings();
+        settings.setName(yearName);
+        settings.setSchoolId(schoolId);
+        settings.setActive(true);  // First year is active by default
+        settings.setTermType(TermType.Semester);  // Default to semesters
+        settings.setTimezone("America/New_York");  // Default timezone
+        // Leave dates as null - to be configured by admin
+        // Using placeholder values that indicate "not configured"
+        settings.setStartDate(null);
+        settings.setEndDate(null);
+        settings.setSchoolDayStart(null);
+        settings.setSchoolDayEnd(null);
+
+        schoolYearSettingsRepository.save(settings);
     }
 
     /**

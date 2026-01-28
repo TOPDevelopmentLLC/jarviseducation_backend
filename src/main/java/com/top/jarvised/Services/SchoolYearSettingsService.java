@@ -306,6 +306,11 @@ public class SchoolYearSettingsService {
             .orElse(null);
         if (settings == null) return false;
 
+        // If dates aren't configured yet, we can't determine if it's a school day
+        if (settings.getStartDate() == null || settings.getEndDate() == null) {
+            return false;
+        }
+
         // Check if within school year
         if (date.isBefore(settings.getStartDate()) || date.isAfter(settings.getEndDate())) {
             return false;
@@ -323,6 +328,16 @@ public class SchoolYearSettingsService {
         }
 
         return true;
+    }
+
+    /**
+     * Checks if the school year settings are fully configured (has dates set)
+     */
+    public boolean isConfigured(SchoolYearSettings settings) {
+        return settings.getStartDate() != null &&
+               settings.getEndDate() != null &&
+               settings.getSchoolDayStart() != null &&
+               settings.getSchoolDayEnd() != null;
     }
 
     public SchedulePeriod getCurrentPeriod(Long schoolId, LocalTime time) {

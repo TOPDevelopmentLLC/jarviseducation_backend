@@ -20,20 +20,20 @@ public class SchoolYearSettings {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column
     private LocalDate startDate;
 
-    @Column(nullable = false)
+    @Column
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TermType termType;
 
-    @Column(nullable = false)
+    @Column
     private LocalTime schoolDayStart;
 
-    @Column(nullable = false)
+    @Column
     private LocalTime schoolDayEnd;
 
     @Column(nullable = false)

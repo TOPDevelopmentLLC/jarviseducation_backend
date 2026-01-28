@@ -181,11 +181,11 @@ public class TenantProvisioningService {
             CREATE TABLE IF NOT EXISTS school_year_settings (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
-                start_date DATE NOT NULL,
-                end_date DATE NOT NULL,
+                start_date DATE,
+                end_date DATE,
                 term_type VARCHAR(50) NOT NULL,
-                school_day_start TIME NOT NULL,
-                school_day_end TIME NOT NULL,
+                school_day_start TIME,
+                school_day_end TIME,
                 timezone VARCHAR(100) NOT NULL,
                 is_active BOOLEAN DEFAULT FALSE,
                 school_id BIGINT NOT NULL
