@@ -1,24 +1,93 @@
 package com.top.jarvised.Services;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.top.jarvised.DTOs.StudentResponse;
+import com.top.jarvised.Entities.PointsSystem;
+import com.top.jarvised.Entities.SchoolYearSettings;
 import com.top.jarvised.Entities.Student;
+import com.top.jarvised.Repositories.PointsSystemRepository;
+import com.top.jarvised.Repositories.SchoolYearSettingsRepository;
 import com.top.jarvised.Repositories.StudentRepository;
 
 @Service
 public class StudentService {
-    
+
     private StudentRepository studentRepository;
+    private SchoolYearSettingsRepository schoolYearSettingsRepository;
+    private SchoolYearSettingsService schoolYearSettingsService;
+    private PointsSystemRepository pointsSystemRepository;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository) {
+    public StudentService(
+            StudentRepository studentRepository,
+            SchoolYearSettingsRepository schoolYearSettingsRepository,
+            SchoolYearSettingsService schoolYearSettingsService,
+            PointsSystemRepository pointsSystemRepository) {
         this.studentRepository = studentRepository;
+        this.schoolYearSettingsRepository = schoolYearSettingsRepository;
+        this.schoolYearSettingsService = schoolYearSettingsService;
+        this.pointsSystemRepository = pointsSystemRepository;
     }
 
-    public List<Student> getAllStudents() {
+    public List<StudentResponse> getAllStudents(Long schoolId, Long userAccountId) {
+        List<Student> students = studentRepository.findAll();
+        Integer studentPoints = calculateStudentPoints(schoolId, userAccountId);
+
+        return students.stream()
+            .map(student -> new StudentResponse(student, studentPoints))
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * Calculates student points based on valid school days and daily increase.
+     * Formula: (number of valid school days from start date to today) * dailyIncrease
+     */
+    private Integer calculateStudentPoints(Long schoolId, Long userAccountId) {
+        // Get the active school year settings
+        SchoolYearSettings settings = schoolYearSettingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
+            .orElse(null);
+
+        if (settings == null || settings.getStartDate() == null) {
+            return 0;
+        }
+
+        // Get the points system for dailyIncrease
+        PointsSystem pointsSystem = pointsSystemRepository.findByUserAccountId(userAccountId)
+            .orElse(null);
+
+        if (pointsSystem == null || pointsSystem.getDailyIncrease() == null || pointsSystem.getDailyIncrease() == 0) {
+            return 0;
+        }
+
+        // Count valid school days from start date to today
+        LocalDate startDate = settings.getStartDate();
+        LocalDate today = LocalDate.now();
+
+        // Don't count days if start date is in the future
+        if (startDate.isAfter(today)) {
+            return 0;
+        }
+
+        int validSchoolDays = 0;
+        LocalDate currentDate = startDate;
+
+        while (!currentDate.isAfter(today)) {
+            if (schoolYearSettingsService.isSchoolDay(schoolId, currentDate)) {
+                validSchoolDays++;
+            }
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return validSchoolDays * pointsSystem.getDailyIncrease();
+    }
+
+    public List<Student> getAllStudentsRaw() {
         return studentRepository.findAll();
     }
 
