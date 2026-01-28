@@ -29,10 +29,10 @@ public class SchoolYearSettingsController {
     // ==================== Main Settings Endpoints ====================
 
     /**
-     * Get all school year settings for the school
+     * Get all historical (inactive) school year settings for the school
      */
-    @GetMapping
-    public ResponseEntity<?> getAllSettings(@RequestHeader("Authorization") String authHeader) {
+    @GetMapping("/historical")
+    public ResponseEntity<?> getHistoricalSettings(@RequestHeader("Authorization") String authHeader) {
         try {
             String token = authHeader.replace("Bearer ", "");
             Long schoolId = jwtUtil.extractSchoolId(token);
@@ -42,12 +42,12 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            List<SchoolYearSettingsResponse> settings = settingsService.getAllSettings(schoolId);
+            List<SchoolYearSettingsResponse> settings = settingsService.getHistoricalSettings(schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                .body(Map.of("error", "Failed to fetch settings: " + e.getMessage()));
+                .body(Map.of("error", "Failed to fetch historical settings: " + e.getMessage()));
         }
     }
 
@@ -100,35 +100,7 @@ public class SchoolYearSettingsController {
     }
 
     /**
-     * Create new school year settings
-     */
-    @PostMapping
-    public ResponseEntity<?> createSettings(
-            @RequestHeader("Authorization") String authHeader,
-            @RequestBody CreateSchoolYearSettingsRequest request) {
-        try {
-            String token = authHeader.replace("Bearer ", "");
-            Long schoolId = jwtUtil.extractSchoolId(token);
-
-            if (schoolId == null) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Invalid token: missing school ID"));
-            }
-
-            SchoolYearSettingsResponse settings = settingsService.createSettings(request, schoolId);
-            return ResponseEntity.ok(Map.of("settings", settings));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                .body(Map.of("error", "Failed to create settings: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Update school year settings
+     * Update school year settings (only active settings can be updated)
      */
     @PutMapping("/{settingsId}")
     public ResponseEntity<?> updateSettings(
@@ -153,31 +125,6 @@ public class SchoolYearSettingsController {
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "Failed to update settings: " + e.getMessage()));
-        }
-    }
-
-    /**
-     * Delete school year settings
-     */
-    @DeleteMapping("/{settingsId}")
-    public ResponseEntity<?> deleteSettings(
-            @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId) {
-        try {
-            String token = authHeader.replace("Bearer ", "");
-            Long schoolId = jwtUtil.extractSchoolId(token);
-
-            if (schoolId == null) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Invalid token: missing school ID"));
-            }
-
-            settingsService.deleteSettings(settingsId, schoolId);
-            return ResponseEntity.ok(Map.of("message", "School year settings deleted successfully"));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(Map.of("error", "Failed to delete settings: " + e.getMessage()));
         }
     }
 

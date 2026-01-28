@@ -38,8 +38,12 @@ public class SchoolYearSettingsService {
 
     // ==================== School Year Settings CRUD ====================
 
-    public List<SchoolYearSettingsResponse> getAllSettings(Long schoolId) {
+    /**
+     * Get all historical (inactive) school year settings
+     */
+    public List<SchoolYearSettingsResponse> getHistoricalSettings(Long schoolId) {
         return settingsRepository.findBySchoolId(schoolId).stream()
+            .filter(settings -> !settings.isActive())
             .map(SchoolYearSettingsResponse::new)
             .collect(Collectors.toList());
     }
@@ -54,6 +58,15 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
         return new SchoolYearSettingsResponse(settings);
+    }
+
+    /**
+     * Validates that the settings are active and can be modified
+     */
+    private void validateActiveSettings(SchoolYearSettings settings) {
+        if (!settings.isActive()) {
+            throw new IllegalStateException("Historical school year settings cannot be modified");
+        }
     }
 
     @Transactional
@@ -137,6 +150,9 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(id, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        // Only active settings can be modified
+        validateActiveSettings(settings);
+
         if (request.getName() != null) {
             settings.setName(request.getName());
         }
@@ -180,6 +196,7 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        validateActiveSettings(settings);
         validateTermDates(request.getStartDate(), request.getEndDate(),
                          settings.getStartDate(), settings.getEndDate());
 
@@ -196,6 +213,8 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        validateActiveSettings(settings);
+
         Term term = termRepository.findByIdAndSchoolYearSettingsId(termId, settingsId)
             .orElseThrow(() -> new RuntimeException("Term not found"));
 
@@ -211,6 +230,7 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        validateActiveSettings(settings);
         validateHolidayDate(request.getDate(), settings.getStartDate(), settings.getEndDate());
 
         Holiday holiday = new Holiday(request.getName(), request.getDate(),
@@ -225,6 +245,8 @@ public class SchoolYearSettingsService {
     public void removeHoliday(Long settingsId, Long holidayId, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
+
+        validateActiveSettings(settings);
 
         Holiday holiday = holidayRepository.findByIdAndSchoolYearSettingsId(holidayId, settingsId)
             .orElseThrow(() -> new RuntimeException("Holiday not found"));
@@ -241,6 +263,7 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        validateActiveSettings(settings);
         validateBreakDates(request.getStartDate(), request.getEndDate(),
                           settings.getStartDate(), settings.getEndDate());
 
@@ -259,6 +282,8 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        validateActiveSettings(settings);
+
         BreakPeriod breakPeriod = breakPeriodRepository.findByIdAndSchoolYearSettingsId(breakPeriodId, settingsId)
             .orElseThrow(() -> new RuntimeException("Break period not found"));
 
@@ -274,6 +299,7 @@ public class SchoolYearSettingsService {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
 
+        validateActiveSettings(settings);
         validateSchedulePeriodTimes(request.getStartTime(), request.getEndTime(),
                                     settings.getSchoolDayStart(), settings.getSchoolDayEnd());
 
@@ -291,6 +317,8 @@ public class SchoolYearSettingsService {
     public void removeSchedulePeriod(Long settingsId, Long periodId, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(settingsId, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
+
+        validateActiveSettings(settings);
 
         SchedulePeriod period = schedulePeriodRepository.findByIdAndSchoolYearSettingsId(periodId, settingsId)
             .orElseThrow(() -> new RuntimeException("Schedule period not found"));
