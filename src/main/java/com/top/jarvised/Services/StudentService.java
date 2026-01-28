@@ -45,6 +45,8 @@ public class StudentService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<StudentResponse> getAllStudents(Long schoolId, Long userAccountId) {
+        // Force set context right before query to ensure routing happens correctly
+        SchoolContext.setSchool(schoolId.toString());
         System.out.println("[DEBUG] StudentService.getAllStudents - SchoolContext: " + SchoolContext.getSchool());
         List<Student> students = studentRepository.findAll();
         System.out.println("[DEBUG] StudentService.getAllStudents - found " + students.size() + " raw students");
