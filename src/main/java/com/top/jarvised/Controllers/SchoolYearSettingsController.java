@@ -129,10 +129,9 @@ public class SchoolYearSettingsController {
 
     // ==================== Term Endpoints ====================
 
-    @PostMapping("/{settingsId}/terms")
+    @PostMapping("/terms")
     public ResponseEntity<?> addTerm(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @RequestBody AddTermRequest request) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -143,7 +142,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            SchoolYearSettingsResponse settings = settingsService.addTerm(settingsId, request, schoolId);
+            SchoolYearSettingsResponse settings = settingsService.addTerm(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
         } catch (IllegalArgumentException e) {
@@ -155,10 +154,9 @@ public class SchoolYearSettingsController {
         }
     }
 
-    @DeleteMapping("/{settingsId}/terms/{termId}")
+    @DeleteMapping("/terms/{termId}")
     public ResponseEntity<?> removeTerm(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @PathVariable Long termId) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -169,7 +167,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            settingsService.removeTerm(settingsId, termId, schoolId);
+            settingsService.removeTerm(termId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Term removed successfully"));
 
         } catch (Exception e) {
@@ -180,10 +178,9 @@ public class SchoolYearSettingsController {
 
     // ==================== Holiday Endpoints ====================
 
-    @PostMapping("/{settingsId}/holidays")
+    @PostMapping("/holidays")
     public ResponseEntity<?> addHoliday(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @RequestBody AddHolidayRequest request) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -194,7 +191,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            SchoolYearSettingsResponse settings = settingsService.addHoliday(settingsId, request, schoolId);
+            SchoolYearSettingsResponse settings = settingsService.addHoliday(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
         } catch (IllegalArgumentException e) {
@@ -206,10 +203,9 @@ public class SchoolYearSettingsController {
         }
     }
 
-    @DeleteMapping("/{settingsId}/holidays/{holidayId}")
+    @DeleteMapping("/holidays/{holidayId}")
     public ResponseEntity<?> removeHoliday(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @PathVariable Long holidayId) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -220,7 +216,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            settingsService.removeHoliday(settingsId, holidayId, schoolId);
+            settingsService.removeHoliday(holidayId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Holiday removed successfully"));
 
         } catch (Exception e) {
@@ -231,10 +227,9 @@ public class SchoolYearSettingsController {
 
     // ==================== Break Period Endpoints ====================
 
-    @PostMapping("/{settingsId}/breaks")
+    @PostMapping("/breaks")
     public ResponseEntity<?> addBreakPeriod(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @RequestBody AddBreakPeriodRequest request) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -245,7 +240,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            SchoolYearSettingsResponse settings = settingsService.addBreakPeriod(settingsId, request, schoolId);
+            SchoolYearSettingsResponse settings = settingsService.addBreakPeriod(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
         } catch (IllegalArgumentException e) {
@@ -257,10 +252,9 @@ public class SchoolYearSettingsController {
         }
     }
 
-    @DeleteMapping("/{settingsId}/breaks/{breakId}")
+    @DeleteMapping("/breaks/{breakId}")
     public ResponseEntity<?> removeBreakPeriod(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @PathVariable Long breakId) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -271,7 +265,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            settingsService.removeBreakPeriod(settingsId, breakId, schoolId);
+            settingsService.removeBreakPeriod(breakId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Break period removed successfully"));
 
         } catch (Exception e) {
@@ -282,10 +276,9 @@ public class SchoolYearSettingsController {
 
     // ==================== Schedule Period Endpoints ====================
 
-    @PostMapping("/{settingsId}/periods")
+    @PostMapping("/periods")
     public ResponseEntity<?> addSchedulePeriod(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @RequestBody AddSchedulePeriodRequest request) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -296,7 +289,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            SchoolYearSettingsResponse settings = settingsService.addSchedulePeriod(settingsId, request, schoolId);
+            SchoolYearSettingsResponse settings = settingsService.addSchedulePeriod(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
         } catch (IllegalArgumentException e) {
@@ -308,10 +301,9 @@ public class SchoolYearSettingsController {
         }
     }
 
-    @DeleteMapping("/{settingsId}/periods/{periodId}")
+    @DeleteMapping("/periods/{periodId}")
     public ResponseEntity<?> removeSchedulePeriod(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long settingsId,
             @PathVariable Long periodId) {
         try {
             String token = authHeader.replace("Bearer ", "");
@@ -322,7 +314,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
-            settingsService.removeSchedulePeriod(settingsId, periodId, schoolId);
+            settingsService.removeSchedulePeriod(periodId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Schedule period removed successfully"));
 
         } catch (Exception e) {
