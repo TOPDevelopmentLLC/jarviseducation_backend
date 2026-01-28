@@ -50,6 +50,9 @@ public class StudentController {
             UserAccount user = userAccountRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+            // Restore school context for tenant DB queries
+            SchoolContext.setSchool(schoolId.toString());
+
             List<StudentResponse> students = studentService.getAllStudents(schoolId, user.getId());
             return ResponseEntity.ok(students);
 
@@ -60,14 +63,43 @@ public class StudentController {
     }
 
     @PostMapping("/students")
-    public Student createStudent(@RequestBody Student student) {
-        return studentService.createStudent(student);
+    public ResponseEntity<?> createStudent(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Student student) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long schoolId = jwtUtil.extractSchoolId(token);
+
+            // Set school context for tenant DB
+            SchoolContext.setSchool(schoolId.toString());
+
+            Student created = studentService.createStudent(student);
+            return ResponseEntity.ok(created);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to create student: " + e.getMessage()));
+        }
     }
 
     @DeleteMapping("/students/{id}")
-    public Map<String, String> deleteStudent(@PathVariable Long id) {
-        studentService.deleteStudent(id);
-        return Map.of("message", "Student deleted successfully");
+    public ResponseEntity<?> deleteStudent(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long id) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long schoolId = jwtUtil.extractSchoolId(token);
+
+            // Set school context for tenant DB
+            SchoolContext.setSchool(schoolId.toString());
+
+            studentService.deleteStudent(id);
+            return ResponseEntity.ok(Map.of("message", "Student deleted successfully"));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to delete student: " + e.getMessage()));
+        }
     }
 
 }
