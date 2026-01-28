@@ -10,6 +10,7 @@ public class PointsSystemResponse {
     private Integer moodDeduction;
     private Integer secludedDeduction;
     private Integer sipDeduction;
+    private Integer dailyIncrease;
 
     public PointsSystemResponse() {}
 
@@ -21,6 +22,7 @@ public class PointsSystemResponse {
         this.moodDeduction = pointsSystem.getMoodDeduction();
         this.secludedDeduction = pointsSystem.getSecludedDeduction();
         this.sipDeduction = pointsSystem.getSipDeduction();
+        this.dailyIncrease = pointsSystem.getDailyIncrease();
     }
 
     public Integer getAttendanceDeduction() {
@@ -77,5 +79,13 @@ public class PointsSystemResponse {
 
     public void setSipDeduction(Integer sipDeduction) {
         this.sipDeduction = sipDeduction;
+    }
+
+    public Integer getDailyIncrease() {
+        return dailyIncrease;
+    }
+
+    public void setDailyIncrease(Integer dailyIncrease) {
+        this.dailyIncrease = dailyIncrease;
     }
 }

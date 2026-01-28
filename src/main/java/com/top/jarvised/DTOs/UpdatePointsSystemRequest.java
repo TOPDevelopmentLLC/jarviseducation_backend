@@ -8,6 +8,7 @@ public class UpdatePointsSystemRequest {
     private Integer moodDeduction;
     private Integer secludedDeduction;
     private Integer sipDeduction;
+    private Integer dailyIncrease;
 
     public UpdatePointsSystemRequest() {}
 
@@ -65,5 +66,13 @@ public class UpdatePointsSystemRequest {
 
     public void setSipDeduction(Integer sipDeduction) {
         this.sipDeduction = sipDeduction;
+    }
+
+    public Integer getDailyIncrease() {
+        return dailyIncrease;
+    }
+
+    public void setDailyIncrease(Integer dailyIncrease) {
+        this.dailyIncrease = dailyIncrease;
     }
 }

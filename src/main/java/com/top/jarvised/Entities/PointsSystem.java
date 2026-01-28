@@ -39,6 +39,9 @@ public class PointsSystem {
     @Column(nullable = false)
     private Integer sipDeduction = 0;
 
+    @Column(nullable = false)
+    private Integer dailyIncrease = 0;
+
     public PointsSystem() {}
 
     public PointsSystem(Long userAccountId) {
@@ -50,6 +53,7 @@ public class PointsSystem {
         this.moodDeduction = 0;
         this.secludedDeduction = 0;
         this.sipDeduction = 0;
+        this.dailyIncrease = 0;
     }
 
     public Long getId() {
@@ -122,5 +126,13 @@ public class PointsSystem {
 
     public void setSipDeduction(Integer sipDeduction) {
         this.sipDeduction = sipDeduction;
+    }
+
+    public Integer getDailyIncrease() {
+        return dailyIncrease;
+    }
+
+    public void setDailyIncrease(Integer dailyIncrease) {
+        this.dailyIncrease = dailyIncrease;
     }
 }

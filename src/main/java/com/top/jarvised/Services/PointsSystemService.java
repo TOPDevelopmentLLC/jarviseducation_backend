@@ -72,6 +72,9 @@ public class PointsSystemService {
         if (request.getSipDeduction() != null) {
             pointsSystem.setSipDeduction(request.getSipDeduction());
         }
+        if (request.getDailyIncrease() != null) {
+            pointsSystem.setDailyIncrease(request.getDailyIncrease());
+        }
 
         pointsSystem = pointsSystemRepository.save(pointsSystem);
         return new PointsSystemResponse(pointsSystem);
