@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.top.jarvised.SchoolContext;
 import com.top.jarvised.DTOs.StudentResponse;
@@ -36,8 +38,11 @@ public class StudentService {
         this.pointsSystemRepository = pointsSystemRepository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<StudentResponse> getAllStudents(Long schoolId, Long userAccountId) {
+        System.out.println("[DEBUG] StudentService.getAllStudents - SchoolContext: " + SchoolContext.getSchool());
         List<Student> students = studentRepository.findAll();
+        System.out.println("[DEBUG] StudentService.getAllStudents - found " + students.size() + " raw students");
         Integer studentPoints = calculateStudentPoints(schoolId, userAccountId);
 
         return students.stream()
@@ -95,7 +100,9 @@ public class StudentService {
         return studentRepository.findAll();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Student createStudent(Student student) {
+        System.out.println("[DEBUG] StudentService.createStudent - SchoolContext: " + SchoolContext.getSchool());
         return studentRepository.save(student);
     }
 
