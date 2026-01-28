@@ -177,6 +177,70 @@ public class TenantProvisioningService {
             )
             """;
 
+        String createSchoolYearSettingsTable = """
+            CREATE TABLE IF NOT EXISTS school_year_settings (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE NOT NULL,
+                term_type VARCHAR(50) NOT NULL,
+                school_day_start TIME NOT NULL,
+                school_day_end TIME NOT NULL,
+                timezone VARCHAR(100) NOT NULL,
+                is_active BOOLEAN DEFAULT FALSE,
+                school_id BIGINT NOT NULL
+            )
+            """;
+
+        String createTermsTable = """
+            CREATE TABLE IF NOT EXISTS terms (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                term_number INT NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE NOT NULL,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        String createHolidaysTable = """
+            CREATE TABLE IF NOT EXISTS holidays (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                date DATE NOT NULL,
+                description TEXT,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        String createBreakPeriodsTable = """
+            CREATE TABLE IF NOT EXISTS break_periods (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                break_type VARCHAR(50) NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE NOT NULL,
+                description TEXT,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        String createSchedulePeriodsTable = """
+            CREATE TABLE IF NOT EXISTS schedule_periods (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                period_number INT NOT NULL,
+                period_type VARCHAR(50) NOT NULL,
+                start_time TIME NOT NULL,
+                end_time TIME NOT NULL,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
         try (Connection conn = DriverManager.getConnection(jdbcUrl, username, password);
              Statement stmt = conn.createStatement()) {
 
@@ -190,6 +254,11 @@ public class TenantProvisioningService {
             stmt.executeUpdate(createCommentsTable);
             stmt.executeUpdate(createTeamsTable);
             stmt.executeUpdate(createUserAccountTeamsTable);
+            stmt.executeUpdate(createSchoolYearSettingsTable);
+            stmt.executeUpdate(createTermsTable);
+            stmt.executeUpdate(createHolidaysTable);
+            stmt.executeUpdate(createBreakPeriodsTable);
+            stmt.executeUpdate(createSchedulePeriodsTable);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize schema for tenant database: " + jdbcUrl, e);
