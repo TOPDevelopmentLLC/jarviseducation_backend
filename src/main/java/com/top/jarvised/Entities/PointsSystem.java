@@ -40,7 +40,7 @@ public class PointsSystem {
     private Integer sipDeduction = 0;
 
     @Column(nullable = false)
-    private Integer dailyIncrease = 0;
+    private Integer dailyIncrease = 1;
 
     public PointsSystem() {}
 
@@ -53,7 +53,7 @@ public class PointsSystem {
         this.moodDeduction = 0;
         this.secludedDeduction = 0;
         this.sipDeduction = 0;
-        this.dailyIncrease = 0;
+        this.dailyIncrease = 1;
     }
 
     public Long getId() {
