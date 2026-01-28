@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.top.jarvised.Entities.Administrator;
 import com.top.jarvised.Repositories.AdministratorRepository;
@@ -18,10 +20,12 @@ public class AdministratorService {
         this.administratorRepository = administratorRepository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Administrator> getAllAdministrators() {
         return administratorRepository.findAll();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Administrator createAdministrator(String name) {
         return administratorRepository.save(new Administrator(name));
     }

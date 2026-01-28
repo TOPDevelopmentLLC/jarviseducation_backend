@@ -14,9 +14,11 @@ import com.top.jarvised.DTOs.StudentResponse;
 import com.top.jarvised.Entities.PointsSystem;
 import com.top.jarvised.Entities.SchoolYearSettings;
 import com.top.jarvised.Entities.Student;
+import com.top.jarvised.Entities.UserAccount;
 import com.top.jarvised.Repositories.PointsSystemRepository;
 import com.top.jarvised.Repositories.SchoolYearSettingsRepository;
 import com.top.jarvised.Repositories.StudentRepository;
+import com.top.jarvised.Repositories.UserAccountRepository;
 
 @Service
 public class StudentService {
@@ -25,17 +27,20 @@ public class StudentService {
     private SchoolYearSettingsRepository schoolYearSettingsRepository;
     private SchoolYearSettingsService schoolYearSettingsService;
     private PointsSystemRepository pointsSystemRepository;
+    private UserAccountRepository userAccountRepository;
 
     @Autowired
     public StudentService(
             StudentRepository studentRepository,
             SchoolYearSettingsRepository schoolYearSettingsRepository,
             SchoolYearSettingsService schoolYearSettingsService,
-            PointsSystemRepository pointsSystemRepository) {
+            PointsSystemRepository pointsSystemRepository,
+            UserAccountRepository userAccountRepository) {
         this.studentRepository = studentRepository;
         this.schoolYearSettingsRepository = schoolYearSettingsRepository;
         this.schoolYearSettingsService = schoolYearSettingsService;
         this.pointsSystemRepository = pointsSystemRepository;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -111,5 +116,18 @@ public class StudentService {
             throw new RuntimeException("Student not found with id: " + id);
         }
         studentRepository.deleteById(id);
+    }
+
+    /**
+     * Get user account ID by email from master DB.
+     * This runs in its own transaction to isolate the master DB query.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Long getUserAccountIdByEmail(String email) {
+        SchoolContext.clear(); // Ensure we query master DB
+        System.out.println("[DEBUG] StudentService.getUserAccountIdByEmail - SchoolContext: " + SchoolContext.getSchool());
+        UserAccount user = userAccountRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.getId();
     }
 }

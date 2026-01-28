@@ -48,18 +48,16 @@ public class StudentController {
             System.out.println("[DEBUG] GET /students - schoolId from JWT: " + schoolId);
             System.out.println("[DEBUG] GET /students - email from JWT: " + email);
 
-            // Get user account ID from master DB
-            SchoolContext.clear();
-            UserAccount user = userAccountRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+            // Get user account ID from master DB using service (handles its own transaction)
+            Long userAccountId = studentService.getUserAccountIdByEmail(email);
 
-            System.out.println("[DEBUG] GET /students - user found, id: " + user.getId());
+            System.out.println("[DEBUG] GET /students - user found, id: " + userAccountId);
 
-            // Restore school context for tenant DB queries
+            // Set school context for tenant DB queries
             SchoolContext.setSchool(schoolId.toString());
             System.out.println("[DEBUG] GET /students - SchoolContext set to: " + SchoolContext.getSchool());
 
-            List<StudentResponse> students = studentService.getAllStudents(schoolId, user.getId());
+            List<StudentResponse> students = studentService.getAllStudents(schoolId, userAccountId);
             System.out.println("[DEBUG] GET /students - found " + students.size() + " students");
 
             return ResponseEntity.ok(students);

@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.top.jarvised.Entities.Parent;
 import com.top.jarvised.Repositories.ParentRepository;
@@ -18,10 +20,12 @@ public class ParentService {
         this.parentRepository = parentRepository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Parent> getAllStudents() {
         return parentRepository.findAll();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Parent createParent(Parent parent) {
         return parentRepository.save(parent);
     }

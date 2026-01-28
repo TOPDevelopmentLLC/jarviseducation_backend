@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.top.jarvised.Entities.ClassCatalogueItem;
 import com.top.jarvised.Repositories.ClassCatalogueRepository;
@@ -18,10 +20,12 @@ public class ClassCatalogueService {
         this.classCatalogueRepository = classCatalogueRepository;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<ClassCatalogueItem> getAllClasses() {
         return classCatalogueRepository.findAll();
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ClassCatalogueItem createClass(ClassCatalogueItem classCatalogue) {
         return classCatalogueRepository.save(classCatalogue);
     }
