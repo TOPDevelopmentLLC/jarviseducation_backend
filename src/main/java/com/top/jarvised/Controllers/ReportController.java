@@ -6,6 +6,7 @@ import com.top.jarvised.DTOs.EditCommentRequest;
 import com.top.jarvised.Entities.Comment;
 import com.top.jarvised.Entities.Report;
 import com.top.jarvised.JwtUtil;
+import com.top.jarvised.SchoolContext;
 import com.top.jarvised.Services.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +42,7 @@ public class ReportController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             List<Report> reports = reportService.getAllReports();
             return ResponseEntity.ok(Map.of("reports", reports));
 
@@ -66,6 +68,7 @@ public class ReportController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             Report report = reportService.createReport(request);
             return ResponseEntity.ok(Map.of("report", report));
 
@@ -94,6 +97,7 @@ public class ReportController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             List<Comment> comments = reportService.getCommentsByReportId(reportId);
             return ResponseEntity.ok(Map.of("comments", comments));
 
@@ -120,6 +124,7 @@ public class ReportController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             Comment comment = reportService.addComment(reportId, request);
             return ResponseEntity.ok(Map.of("comment", comment));
 
@@ -150,6 +155,7 @@ public class ReportController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             Comment comment = reportService.editComment(reportId, commentId, request);
             return ResponseEntity.ok(Map.of("comment", comment));
 

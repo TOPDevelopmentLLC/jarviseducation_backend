@@ -4,6 +4,7 @@ import com.top.jarvised.DTOs.CreateTeamRequest;
 import com.top.jarvised.DTOs.TeamResponse;
 import com.top.jarvised.DTOs.UpdateTeamRequest;
 import com.top.jarvised.JwtUtil;
+import com.top.jarvised.SchoolContext;
 import com.top.jarvised.Services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,7 @@ public class TeamController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             List<TeamResponse> teams = teamService.getAllTeams(schoolId);
             return ResponseEntity.ok(Map.of("teams", teams));
 
@@ -64,6 +66,7 @@ public class TeamController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             TeamResponse team = teamService.getTeamById(teamId, schoolId);
             return ResponseEntity.ok(Map.of("team", team));
 
@@ -89,6 +92,7 @@ public class TeamController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             List<TeamResponse> teams = teamService.getTeamsForUser(userId, schoolId);
             return ResponseEntity.ok(Map.of("teams", teams));
 
@@ -114,6 +118,7 @@ public class TeamController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             TeamResponse team = teamService.createTeam(request, schoolId);
             return ResponseEntity.ok(Map.of("team", team));
 
@@ -140,6 +145,7 @@ public class TeamController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             TeamResponse team = teamService.updateTeam(teamId, request, schoolId);
             return ResponseEntity.ok(Map.of("team", team));
 
@@ -165,6 +171,7 @@ public class TeamController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             teamService.deleteTeam(teamId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Team deleted successfully"));
 

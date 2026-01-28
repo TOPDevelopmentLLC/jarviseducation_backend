@@ -4,6 +4,7 @@ import com.top.jarvised.DTOs.CreateCodeRequest;
 import com.top.jarvised.DTOs.UpdateCodeRequest;
 import com.top.jarvised.Entities.Code;
 import com.top.jarvised.JwtUtil;
+import com.top.jarvised.SchoolContext;
 import com.top.jarvised.Services.CodeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,7 @@ public class CodeController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             List<Code> codes = codeService.getAllCodes();
             return ResponseEntity.ok(Map.of("codes", codes));
 
@@ -64,6 +66,7 @@ public class CodeController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             Code code = codeService.getCodeById(codeId);
             return ResponseEntity.ok(Map.of("code", code));
 
@@ -89,6 +92,7 @@ public class CodeController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             Code code = codeService.createCode(request);
             return ResponseEntity.ok(Map.of("code", code));
 
@@ -115,6 +119,7 @@ public class CodeController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             Code code = codeService.updateCode(codeId, request);
             return ResponseEntity.ok(Map.of("code", code));
 
@@ -140,6 +145,7 @@ public class CodeController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             codeService.deleteCode(codeId);
             return ResponseEntity.ok(Map.of("message", "Code deleted successfully"));
 

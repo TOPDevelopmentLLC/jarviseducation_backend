@@ -6,6 +6,7 @@ import com.top.jarvised.Entities.Code;
 import com.top.jarvised.Repositories.CodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class CodeService {
     /**
      * Get all codes
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Code> getAllCodes() {
         return codeRepository.findAll();
     }
@@ -30,6 +32,7 @@ public class CodeService {
     /**
      * Get a specific code by ID
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Code getCodeById(Long codeId) {
         return codeRepository.findById(codeId)
             .orElseThrow(() -> new RuntimeException("Code not found"));
@@ -38,7 +41,7 @@ public class CodeService {
     /**
      * Create a new code
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Code createCode(CreateCodeRequest request) {
         if (request.getCode() == null || request.getCode().trim().isEmpty()) {
             throw new RuntimeException("Code value is required");
@@ -51,7 +54,7 @@ public class CodeService {
     /**
      * Update an existing code
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Code updateCode(Long codeId, UpdateCodeRequest request) {
         Code code = codeRepository.findById(codeId)
             .orElseThrow(() -> new RuntimeException("Code not found"));
@@ -71,7 +74,7 @@ public class CodeService {
      * Delete a code
      * Automatically removes the code from all teams it's assigned to
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteCode(Long codeId) {
         Code code = codeRepository.findById(codeId)
             .orElseThrow(() -> new RuntimeException("Code not found"));

@@ -10,6 +10,7 @@ import com.top.jarvised.Repositories.CommentRepository;
 import com.top.jarvised.Repositories.ReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class ReportService {
     /**
      * Get all comments for a specific report
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Comment> getCommentsByReportId(Long reportId) {
         // Verify report exists
         reportRepository.findById(reportId)
@@ -41,7 +43,7 @@ public class ReportService {
     /**
      * Add a comment to a report
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Comment addComment(Long reportId, AddCommentRequest request) {
         // Validate request
         if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
@@ -63,7 +65,7 @@ public class ReportService {
     /**
      * Edit a comment on a report
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Comment editComment(Long reportId, Long commentId, EditCommentRequest request) {
         // Validate request
         if (request.getBodyText() == null || request.getBodyText().trim().isEmpty()) {
@@ -93,6 +95,7 @@ public class ReportService {
     /**
      * Get all reports
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Report> getAllReports() {
         return reportRepository.findAll();
     }
@@ -100,7 +103,7 @@ public class ReportService {
     /**
      * Create a new report
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Report createReport(CreateReportRequest request) {
         // Validate request
         if (request.getReportType() == null) {

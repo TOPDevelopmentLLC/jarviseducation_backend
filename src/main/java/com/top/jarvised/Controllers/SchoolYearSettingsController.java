@@ -3,6 +3,7 @@ package com.top.jarvised.Controllers;
 import com.top.jarvised.DTOs.*;
 import com.top.jarvised.Entities.SchedulePeriod;
 import com.top.jarvised.JwtUtil;
+import com.top.jarvised.SchoolContext;
 import com.top.jarvised.Services.SchoolYearSettingsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             List<SchoolYearSettingsResponse> settings = settingsService.getHistoricalSettings(schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -65,6 +67,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.getActiveSettings(schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -90,6 +93,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.getSettingsById(settingsId, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -115,6 +119,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.updateActiveSettings(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -142,6 +147,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.addTerm(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -167,6 +173,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             settingsService.removeTerm(termId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Term removed successfully"));
 
@@ -191,6 +198,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.addHoliday(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -216,6 +224,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             settingsService.removeHoliday(holidayId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Holiday removed successfully"));
 
@@ -240,6 +249,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.addBreakPeriod(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -265,6 +275,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             settingsService.removeBreakPeriod(breakId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Break period removed successfully"));
 
@@ -289,6 +300,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             SchoolYearSettingsResponse settings = settingsService.addSchedulePeriod(request, schoolId);
             return ResponseEntity.ok(Map.of("settings", settings));
 
@@ -314,6 +326,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             settingsService.removeSchedulePeriod(periodId, schoolId);
             return ResponseEntity.ok(Map.of("message", "Schedule period removed successfully"));
 
@@ -341,6 +354,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             LocalDate queryDate = LocalDate.parse(date);
             boolean isSchoolDay = settingsService.isSchoolDay(schoolId, queryDate);
             return ResponseEntity.ok(Map.of("isSchoolDay", isSchoolDay, "date", date));
@@ -367,6 +381,7 @@ public class SchoolYearSettingsController {
                     .body(Map.of("error", "Invalid token: missing school ID"));
             }
 
+            SchoolContext.setSchool(schoolId.toString());
             LocalTime queryTime = (time != null) ? LocalTime.parse(time) : LocalTime.now();
             SchedulePeriod period = settingsService.getCurrentPeriod(schoolId, queryTime);
 

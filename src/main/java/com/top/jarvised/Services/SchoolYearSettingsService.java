@@ -6,6 +6,7 @@ import com.top.jarvised.Enums.*;
 import com.top.jarvised.Repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -41,6 +42,7 @@ public class SchoolYearSettingsService {
     /**
      * Get all historical (inactive) school year settings
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<SchoolYearSettingsResponse> getHistoricalSettings(Long schoolId) {
         return settingsRepository.findBySchoolId(schoolId).stream()
             .filter(settings -> !settings.isActive())
@@ -48,12 +50,14 @@ public class SchoolYearSettingsService {
             .collect(Collectors.toList());
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse getSettingsById(Long id, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(id, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
         return new SchoolYearSettingsResponse(settings);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse getActiveSettings(Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseGet(() -> {
@@ -74,7 +78,7 @@ public class SchoolYearSettingsService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse createSettings(CreateSchoolYearSettingsRequest request,
                                                       Long schoolId) {
         // Validate dates
@@ -149,7 +153,7 @@ public class SchoolYearSettingsService {
         return new SchoolYearSettingsResponse(settings);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse updateActiveSettings(UpdateSchoolYearSettingsRequest request,
                                                             Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
@@ -180,7 +184,7 @@ public class SchoolYearSettingsService {
         return new SchoolYearSettingsResponse(settings);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteSettings(Long id, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findByIdAndSchoolId(id, schoolId)
             .orElseThrow(() -> new RuntimeException("School year settings not found"));
@@ -189,7 +193,7 @@ public class SchoolYearSettingsService {
 
     // ==================== Term Management ====================
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse addTerm(AddTermRequest request, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -205,7 +209,7 @@ public class SchoolYearSettingsService {
         return new SchoolYearSettingsResponse(settings);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeTerm(Long termId, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -219,7 +223,7 @@ public class SchoolYearSettingsService {
 
     // ==================== Holiday Management ====================
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse addHoliday(AddHolidayRequest request, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -234,7 +238,7 @@ public class SchoolYearSettingsService {
         return new SchoolYearSettingsResponse(settings);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeHoliday(Long holidayId, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -248,7 +252,7 @@ public class SchoolYearSettingsService {
 
     // ==================== Break Period Management ====================
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse addBreakPeriod(AddBreakPeriodRequest request, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -266,7 +270,7 @@ public class SchoolYearSettingsService {
         return new SchoolYearSettingsResponse(settings);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeBreakPeriod(Long breakPeriodId, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -280,7 +284,7 @@ public class SchoolYearSettingsService {
 
     // ==================== Schedule Period Management ====================
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchoolYearSettingsResponse addSchedulePeriod(AddSchedulePeriodRequest request, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -298,7 +302,7 @@ public class SchoolYearSettingsService {
         return new SchoolYearSettingsResponse(settings);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void removeSchedulePeriod(Long periodId, Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings found"));
@@ -312,6 +316,7 @@ public class SchoolYearSettingsService {
 
     // ==================== Utility Methods ====================
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean isSchoolDay(Long schoolId, LocalDate date) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElse(null);
@@ -351,6 +356,7 @@ public class SchoolYearSettingsService {
                settings.getSchoolDayEnd() != null;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SchedulePeriod getCurrentPeriod(Long schoolId, LocalTime time) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElseThrow(() -> new RuntimeException("No active school year settings"));
@@ -432,7 +438,7 @@ public class SchoolYearSettingsService {
      * @param schoolId The school ID to create settings for
      * @return true if settings were created, false if they already existed
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean createDefaultSettingsIfNotExists(Long schoolId) {
         // Check if any settings exist for this school
         List<SchoolYearSettings> existingSettings = settingsRepository.findBySchoolId(schoolId);

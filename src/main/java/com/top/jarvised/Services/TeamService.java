@@ -12,6 +12,7 @@ import com.top.jarvised.Repositories.TeamRepository;
 import com.top.jarvised.Repositories.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class TeamService {
     /**
      * Get all teams for a specific school
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<TeamResponse> getAllTeams(Long schoolId) {
         List<Team> teams = teamRepository.findBySchoolId(schoolId);
         return teams.stream()
@@ -48,6 +50,7 @@ public class TeamService {
     /**
      * Get a specific team by ID
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TeamResponse getTeamById(Long teamId, Long schoolId) {
         Team team = teamRepository.findByIdAndSchoolId(teamId, schoolId)
             .orElseThrow(() -> new RuntimeException("Team not found"));
@@ -57,6 +60,7 @@ public class TeamService {
     /**
      * Get teams that a user is a member of
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<TeamResponse> getTeamsForUser(Long userId, Long schoolId) {
         UserAccount user = userAccountRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
@@ -76,7 +80,7 @@ public class TeamService {
     /**
      * Create a new team
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TeamResponse createTeam(CreateTeamRequest request, Long schoolId) {
         // Create new team
         Team team = new Team(request.getName(), request.getDescription(), schoolId);
@@ -122,7 +126,7 @@ public class TeamService {
     /**
      * Update a team
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public TeamResponse updateTeam(Long teamId, UpdateTeamRequest request, Long schoolId) {
         Team team = teamRepository.findByIdAndSchoolId(teamId, schoolId)
             .orElseThrow(() -> new RuntimeException("Team not found"));
@@ -189,7 +193,7 @@ public class TeamService {
      * Delete a team
      * Automatically removes the team from all related codes
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deleteTeam(Long teamId, Long schoolId) {
         Team team = teamRepository.findByIdAndSchoolId(teamId, schoolId)
             .orElseThrow(() -> new RuntimeException("Team not found"));
