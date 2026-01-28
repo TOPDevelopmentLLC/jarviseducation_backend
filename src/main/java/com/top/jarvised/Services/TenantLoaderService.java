@@ -1,5 +1,7 @@
 package com.top.jarvised.Services;
 
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -42,6 +44,9 @@ public class TenantLoaderService {
                 for (School school : schools) {
                     DataSource ds = createDataSource(school);
                     router.addDataSource(school.getId().toString(), ds);
+
+                    // Run schema migration for existing tenants
+                    migrateSchemaIfNeeded(ds, school.getSchoolName());
                 }
 
                 System.out.println("✓ Loaded " + schools.size() + " existing tenant(s)");
@@ -65,5 +70,90 @@ public class TenantLoaderService {
         ds.setMaximumPoolSize(10);
         ds.setMinimumIdle(2);
         return ds;
+    }
+
+    /**
+     * Runs schema migration for existing tenant databases.
+     * Uses CREATE TABLE IF NOT EXISTS so it's safe to run multiple times.
+     */
+    private void migrateSchemaIfNeeded(DataSource ds, String schoolName) {
+        String createSchoolYearSettingsTable = """
+            CREATE TABLE IF NOT EXISTS school_year_settings (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                start_date DATE,
+                end_date DATE,
+                term_type VARCHAR(50) NOT NULL,
+                school_day_start TIME,
+                school_day_end TIME,
+                timezone VARCHAR(100) NOT NULL,
+                is_active BOOLEAN DEFAULT FALSE,
+                school_id BIGINT NOT NULL
+            )
+            """;
+
+        String createTermsTable = """
+            CREATE TABLE IF NOT EXISTS terms (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                term_number INT NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE NOT NULL,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        String createHolidaysTable = """
+            CREATE TABLE IF NOT EXISTS holidays (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                date DATE NOT NULL,
+                description TEXT,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        String createBreakPeriodsTable = """
+            CREATE TABLE IF NOT EXISTS break_periods (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                break_type VARCHAR(50) NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE NOT NULL,
+                description TEXT,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        String createSchedulePeriodsTable = """
+            CREATE TABLE IF NOT EXISTS schedule_periods (
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                period_number INT NOT NULL,
+                period_type VARCHAR(50) NOT NULL,
+                start_time TIME NOT NULL,
+                end_time TIME NOT NULL,
+                school_year_settings_id BIGINT NOT NULL,
+                FOREIGN KEY (school_year_settings_id) REFERENCES school_year_settings(id) ON DELETE CASCADE
+            )
+            """;
+
+        try (Connection conn = ds.getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            stmt.executeUpdate(createSchoolYearSettingsTable);
+            stmt.executeUpdate(createTermsTable);
+            stmt.executeUpdate(createHolidaysTable);
+            stmt.executeUpdate(createBreakPeriodsTable);
+            stmt.executeUpdate(createSchedulePeriodsTable);
+
+            System.out.println("  ✓ Schema migration complete for: " + schoolName);
+
+        } catch (Exception e) {
+            System.err.println("  ✗ Schema migration failed for " + schoolName + ": " + e.getMessage());
+        }
     }
 }
