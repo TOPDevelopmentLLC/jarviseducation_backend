@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.top.jarvised.SchoolContext;
 import com.top.jarvised.DTOs.StudentResponse;
 import com.top.jarvised.Entities.PointsSystem;
 import com.top.jarvised.Entities.SchoolYearSettings;
@@ -49,7 +50,7 @@ public class StudentService {
      * Formula: (number of valid school days from start date to today) * dailyIncrease
      */
     private Integer calculateStudentPoints(Long schoolId, Long userAccountId) {
-        // Get the active school year settings
+        // Get the active school year settings (tenant DB)
         SchoolYearSettings settings = schoolYearSettingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
             .orElse(null);
 
@@ -57,9 +58,12 @@ public class StudentService {
             return 0;
         }
 
-        // Get the points system for dailyIncrease
+        // Get the points system for dailyIncrease (master DB)
+        SchoolContext.clear();
         PointsSystem pointsSystem = pointsSystemRepository.findByUserAccountId(userAccountId)
             .orElse(null);
+        // Restore tenant context
+        SchoolContext.setSchool(schoolId.toString());
 
         if (pointsSystem == null || pointsSystem.getDailyIncrease() == null || pointsSystem.getDailyIncrease() == 0) {
             return 0;
