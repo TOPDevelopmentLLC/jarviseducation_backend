@@ -48,6 +48,8 @@ public class StudentController {
             System.out.println("[DEBUG] GET /students - schoolId from JWT: " + schoolId);
             System.out.println("[DEBUG] GET /students - email from JWT: " + email);
 
+            // Clear context BEFORE calling service to ensure master DB transaction
+            SchoolContext.clear();
             // Get user account ID from master DB using service (handles its own transaction)
             Long userAccountId = studentService.getUserAccountIdByEmail(email);
 

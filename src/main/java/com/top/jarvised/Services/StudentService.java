@@ -121,10 +121,10 @@ public class StudentService {
     /**
      * Get user account ID by email from master DB.
      * This runs in its own transaction to isolate the master DB query.
+     * IMPORTANT: Caller must clear SchoolContext BEFORE calling this method.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Long getUserAccountIdByEmail(String email) {
-        SchoolContext.clear(); // Ensure we query master DB
         System.out.println("[DEBUG] StudentService.getUserAccountIdByEmail - SchoolContext: " + SchoolContext.getSchool());
         UserAccount user = userAccountRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("User not found"));
