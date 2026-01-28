@@ -43,7 +43,9 @@ public class TenantLoaderService {
 
                 for (School school : schools) {
                     DataSource ds = createDataSource(school);
-                    router.addDataSource(school.getId().toString(), ds);
+                    String tenantKey = school.getId().toString();
+                    router.addDataSource(tenantKey, ds);
+                    System.out.println("  [DEBUG] Registered tenant with key: " + tenantKey + " for school: " + school.getSchoolName());
 
                     // Run schema migration for existing tenants
                     migrateSchemaIfNeeded(ds, school.getSchoolName());

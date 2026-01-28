@@ -12,7 +12,9 @@ public class DataSourceRouter extends AbstractRoutingDataSource {
 
     @Override
     protected Object determineCurrentLookupKey() {
-        return SchoolContext.getSchool();
+        String key = SchoolContext.getSchool();
+        System.out.println("[DEBUG] DataSourceRouter.determineCurrentLookupKey: " + key + ", available keys: " + (targetDataSources != null ? targetDataSources.keySet() : "null"));
+        return key;
     }
 
     @Override
