@@ -45,18 +45,27 @@ public class StudentController {
             Long schoolId = jwtUtil.extractSchoolId(token);
             String email = jwtUtil.extractUsername(token);
 
+            System.out.println("[DEBUG] GET /students - schoolId from JWT: " + schoolId);
+            System.out.println("[DEBUG] GET /students - email from JWT: " + email);
+
             // Get user account ID from master DB
             SchoolContext.clear();
             UserAccount user = userAccountRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+            System.out.println("[DEBUG] GET /students - user found, id: " + user.getId());
+
             // Restore school context for tenant DB queries
             SchoolContext.setSchool(schoolId.toString());
+            System.out.println("[DEBUG] GET /students - SchoolContext set to: " + SchoolContext.getSchool());
 
             List<StudentResponse> students = studentService.getAllStudents(schoolId, user.getId());
+            System.out.println("[DEBUG] GET /students - found " + students.size() + " students");
+
             return ResponseEntity.ok(students);
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "Failed to get students: " + e.getMessage()));
         }
@@ -70,13 +79,20 @@ public class StudentController {
             String token = authHeader.replace("Bearer ", "");
             Long schoolId = jwtUtil.extractSchoolId(token);
 
+            System.out.println("[DEBUG] POST /students - schoolId from JWT: " + schoolId);
+            System.out.println("[DEBUG] POST /students - student name: " + student.getName());
+
             // Set school context for tenant DB
             SchoolContext.setSchool(schoolId.toString());
+            System.out.println("[DEBUG] POST /students - SchoolContext set to: " + SchoolContext.getSchool());
 
             Student created = studentService.createStudent(student);
+            System.out.println("[DEBUG] POST /students - created student with id: " + created.getId());
+
             return ResponseEntity.ok(created);
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest()
                 .body(Map.of("error", "Failed to create student: " + e.getMessage()));
         }
