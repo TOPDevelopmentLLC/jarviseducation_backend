@@ -56,7 +56,12 @@ public class SchoolYearSettingsService {
 
     public SchoolYearSettingsResponse getActiveSettings(Long schoolId) {
         SchoolYearSettings settings = settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
-            .orElseThrow(() -> new RuntimeException("No active school year settings found"));
+            .orElseGet(() -> {
+                // Auto-create default settings for existing accounts that don't have any
+                createDefaultSettingsIfNotExists(schoolId);
+                return settingsRepository.findBySchoolIdAndIsActiveTrue(schoolId)
+                    .orElseThrow(() -> new RuntimeException("Failed to create default school year settings"));
+            });
         return new SchoolYearSettingsResponse(settings);
     }
 
@@ -405,5 +410,41 @@ public class SchoolYearSettingsService {
                 settings.setActive(false);
                 settingsRepository.save(settings);
             });
+    }
+
+    // ==================== Migration Methods ====================
+
+    /**
+     * Creates default school year settings for a school if none exist.
+     * Used for migrating existing accounts that were created before this feature.
+     * @param schoolId The school ID to create settings for
+     * @return true if settings were created, false if they already existed
+     */
+    @Transactional
+    public boolean createDefaultSettingsIfNotExists(Long schoolId) {
+        // Check if any settings exist for this school
+        List<SchoolYearSettings> existingSettings = settingsRepository.findBySchoolId(schoolId);
+        if (!existingSettings.isEmpty()) {
+            return false; // Settings already exist
+        }
+
+        // Create default settings
+        LocalDate now = LocalDate.now();
+        int startYear = now.getMonthValue() >= 7 ? now.getYear() : now.getYear() - 1;
+        String yearName = startYear + "-" + (startYear + 1) + " School Year";
+
+        SchoolYearSettings settings = new SchoolYearSettings();
+        settings.setName(yearName);
+        settings.setSchoolId(schoolId);
+        settings.setActive(true);
+        settings.setTermType(TermType.Semester);
+        settings.setTimezone("America/New_York");
+        settings.setStartDate(null);
+        settings.setEndDate(null);
+        settings.setSchoolDayStart(null);
+        settings.setSchoolDayEnd(null);
+
+        settingsRepository.save(settings);
+        return true;
     }
 }
