@@ -373,14 +373,20 @@ public class SchoolYearSettingsService {
         if (termEnd.isBefore(termStart)) {
             throw new IllegalArgumentException("Term end date must be after start date");
         }
-        if (termStart.isBefore(yearStart) || termEnd.isAfter(yearEnd)) {
-            throw new IllegalArgumentException("Term dates must be within the school year");
+        // Only validate against school year bounds if they are configured
+        if (yearStart != null && yearEnd != null) {
+            if (termStart.isBefore(yearStart) || termEnd.isAfter(yearEnd)) {
+                throw new IllegalArgumentException("Term dates must be within the school year");
+            }
         }
     }
 
     private void validateHolidayDate(LocalDate holidayDate, LocalDate yearStart, LocalDate yearEnd) {
-        if (holidayDate.isBefore(yearStart) || holidayDate.isAfter(yearEnd)) {
-            throw new IllegalArgumentException("Holiday date must be within the school year");
+        // Only validate against school year bounds if they are configured
+        if (yearStart != null && yearEnd != null) {
+            if (holidayDate.isBefore(yearStart) || holidayDate.isAfter(yearEnd)) {
+                throw new IllegalArgumentException("Holiday date must be within the school year");
+            }
         }
     }
 
@@ -389,8 +395,11 @@ public class SchoolYearSettingsService {
         if (breakEnd.isBefore(breakStart)) {
             throw new IllegalArgumentException("Break end date must be after start date");
         }
-        if (breakStart.isBefore(yearStart) || breakEnd.isAfter(yearEnd)) {
-            throw new IllegalArgumentException("Break dates must be within the school year");
+        // Only validate against school year bounds if they are configured
+        if (yearStart != null && yearEnd != null) {
+            if (breakStart.isBefore(yearStart) || breakEnd.isAfter(yearEnd)) {
+                throw new IllegalArgumentException("Break dates must be within the school year");
+            }
         }
     }
 
@@ -399,8 +408,11 @@ public class SchoolYearSettingsService {
         if (periodEnd.isBefore(periodStart)) {
             throw new IllegalArgumentException("Period end time must be after start time");
         }
-        if (periodStart.isBefore(dayStart) || periodEnd.isAfter(dayEnd)) {
-            throw new IllegalArgumentException("Period times must be within school day hours");
+        // Only validate against school day hours if they are configured
+        if (dayStart != null && dayEnd != null) {
+            if (periodStart.isBefore(dayStart) || periodEnd.isAfter(dayEnd)) {
+                throw new IllegalArgumentException("Period times must be within school day hours");
+            }
         }
     }
 
