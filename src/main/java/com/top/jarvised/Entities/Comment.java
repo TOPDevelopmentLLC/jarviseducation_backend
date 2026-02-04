@@ -1,5 +1,6 @@
 package com.top.jarvised.Entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -26,6 +27,7 @@ public class Comment {
     @Column
     private LocalDateTime lastEditedTimestamp;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "report_id", nullable = false)
     private Report report;
