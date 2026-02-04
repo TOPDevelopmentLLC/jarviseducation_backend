@@ -80,6 +80,14 @@ public class Report {
         this.student = student;
     }
 
+    public String getStudentName() {
+        return this.student != null ? this.student.getName() : null;
+    }
+
+    public Long getStudentId() {
+        return this.student != null ? this.student.getId() : null;
+    }
+
     public List<Comment> getComments() {
         return comments;
     }

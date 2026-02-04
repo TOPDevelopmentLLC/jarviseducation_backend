@@ -97,11 +97,11 @@ public class ReportService {
     }
 
     /**
-     * Get all reports
+     * Get all reports with student information
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<Report> getAllReports() {
-        return reportRepository.findAll();
+        return reportRepository.findAllWithStudent();
     }
 
     /**
