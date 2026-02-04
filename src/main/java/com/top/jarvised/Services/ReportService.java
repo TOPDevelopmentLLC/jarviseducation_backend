@@ -105,6 +105,18 @@ public class ReportService {
     }
 
     /**
+     * Get all reports for a specific student
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<Report> getReportsByStudentId(Long studentId) {
+        // Verify student exists
+        studentRepository.findById(studentId)
+            .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return reportRepository.findByStudentId(studentId);
+    }
+
+    /**
      * Create a new report
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)

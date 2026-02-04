@@ -82,6 +82,32 @@ public class ReportController {
     }
 
     /**
+     * Get all reports for a specific student
+     */
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<?> getReportsByStudent(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long studentId) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long schoolId = jwtUtil.extractSchoolId(token);
+
+            if (schoolId == null) {
+                return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Invalid token: missing school ID"));
+            }
+
+            SchoolContext.setSchool(schoolId.toString());
+            List<Report> reports = reportService.getReportsByStudentId(studentId);
+            return ResponseEntity.ok(Map.of("reports", reports));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to fetch reports for student: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Get all comments for a specific report
      */
     @GetMapping("/{reportId}/comments")
