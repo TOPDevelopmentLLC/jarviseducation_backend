@@ -17,6 +17,8 @@ public class Student {
     // private Optional<Long> userAccountID;
     // private Optional<Long> parentAccountID;
 
+    private boolean isActive = true;
+
     @JsonIgnore
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Report> reports = new ArrayList<>();
@@ -25,6 +27,7 @@ public class Student {
 
     public Student(String name) {
         this.name = name;
+        this.isActive = true;
     }
 
     public Long getId() {
@@ -47,5 +50,13 @@ public class Student {
     public void removeReport(Report report) {
         reports.remove(report);
         report.setStudent(null);
+    }
+
+    public boolean isActive() {
+        return this.isActive;
+    }
+
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
     }
 }

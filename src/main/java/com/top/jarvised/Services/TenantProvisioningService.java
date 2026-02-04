@@ -115,7 +115,8 @@ public class TenantProvisioningService {
             CREATE TABLE IF NOT EXISTS students (
                 id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(255),
-                grade VARCHAR(50)
+                grade VARCHAR(50),
+                is_active BOOLEAN DEFAULT TRUE
             )
             """;
 
