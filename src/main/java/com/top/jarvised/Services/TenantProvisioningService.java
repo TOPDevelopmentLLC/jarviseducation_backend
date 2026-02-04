@@ -347,6 +347,25 @@ public class TenantProvisioningService {
                 System.out.println("student_id column already exists in reports table for " + dbName);
             }
 
+            // Fix enum values that were stored as ordinals instead of names
+            // ReportType enum order: ABC=0, Attendance=1, Behavior=2, Conflict=3, Expelled=4, Mood=5, Secluded=6, SIP=7, None=8
+            String[] reportTypes = {"ABC", "Attendance", "Behavior", "Conflict", "Expelled", "Mood", "Secluded", "SIP", "None"};
+            for (int i = 0; i < reportTypes.length; i++) {
+                int fixedRows = stmt.executeUpdate("UPDATE reports SET report_type = '" + reportTypes[i] + "' WHERE report_type = '" + i + "'");
+                if (fixedRows > 0) {
+                    System.out.println("Fixed " + fixedRows + " reports with report_type ordinal " + i + " -> " + reportTypes[i]);
+                }
+            }
+
+            // MoodType enum order: Green=0, Blue=1, Yellow=2, Red=3, None=4
+            String[] moodTypes = {"Green", "Blue", "Yellow", "Red", "None"};
+            for (int i = 0; i < moodTypes.length; i++) {
+                int fixedRows = stmt.executeUpdate("UPDATE reports SET mood_type = '" + moodTypes[i] + "' WHERE mood_type = '" + i + "'");
+                if (fixedRows > 0) {
+                    System.out.println("Fixed " + fixedRows + " reports with mood_type ordinal " + i + " -> " + moodTypes[i]);
+                }
+            }
+
             System.out.println("Successfully migrated tenant database: " + dbName);
 
         } catch (Exception e) {

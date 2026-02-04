@@ -17,9 +17,14 @@ public class Report {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
     private ReportType reportType;
+
     private String description;
+
     @Nullable
+    @Enumerated(EnumType.STRING)
     private MoodType moodType;
     private String reportedByName;
     private Long reportedById;
