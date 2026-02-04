@@ -5,9 +5,11 @@ import com.top.jarvised.DTOs.CreateReportRequest;
 import com.top.jarvised.DTOs.EditCommentRequest;
 import com.top.jarvised.Entities.Comment;
 import com.top.jarvised.Entities.Report;
+import com.top.jarvised.Entities.Student;
 import com.top.jarvised.Enums.ReportType;
 import com.top.jarvised.Repositories.CommentRepository;
 import com.top.jarvised.Repositories.ReportRepository;
+import com.top.jarvised.Repositories.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,11 +23,13 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final CommentRepository commentRepository;
+    private final StudentRepository studentRepository;
 
     @Autowired
-    public ReportService(ReportRepository reportRepository, CommentRepository commentRepository) {
+    public ReportService(ReportRepository reportRepository, CommentRepository commentRepository, StudentRepository studentRepository) {
         this.reportRepository = reportRepository;
         this.commentRepository = commentRepository;
+        this.studentRepository = studentRepository;
     }
 
     /**
@@ -124,13 +128,23 @@ public class ReportService {
             throw new IllegalArgumentException("Mood type is required for Mood reports");
         }
 
+        // Validate studentId is provided
+        if (request.getStudentId() == null) {
+            throw new IllegalArgumentException("Student ID is required");
+        }
+
+        // Find the student
+        Student student = studentRepository.findById(request.getStudentId())
+            .orElseThrow(() -> new RuntimeException("Student not found"));
+
         // Create and save report
         Report report = new Report(
             request.getReportType(),
             request.getDescription(),
             request.getReportedByName(),
             request.getReportedById(),
-            request.getMoodType()
+            request.getMoodType(),
+            student
         );
 
         return reportRepository.save(report);

@@ -143,7 +143,9 @@ public class TenantProvisioningService {
                 reported_by_name VARCHAR(255),
                 reported_by_id BIGINT,
                 mood_type VARCHAR(50),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                student_id BIGINT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (student_id) REFERENCES students(id)
             )
             """;
 
