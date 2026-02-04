@@ -2,6 +2,7 @@ package com.top.jarvised.Services;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
 
@@ -303,28 +304,29 @@ public class TenantProvisioningService {
     public void migrateTenantDatabase(School school) {
         String jdbcUrl = school.getDbUrl();
 
-        // Migration statements - these use IF NOT EXISTS or check before adding
-        String addIsActiveToStudents = """
-            ALTER TABLE students ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE
-            """;
-
-        String setExistingStudentsActive = """
-            UPDATE students SET is_active = TRUE WHERE is_active IS NULL
-            """;
-
-        String addStudentIdToReports = """
-            ALTER TABLE reports ADD COLUMN IF NOT EXISTS student_id BIGINT
-            """;
-
         try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUsername, dbPassword);
              Statement stmt = conn.createStatement()) {
 
-            // Add is_active column to students table
-            stmt.executeUpdate(addIsActiveToStudents);
-            // Set all existing students to active
-            stmt.executeUpdate(setExistingStudentsActive);
-            // Add student_id column to reports table
-            stmt.executeUpdate(addStudentIdToReports);
+            // Check if is_active column exists in students table
+            ResultSet rs = conn.getMetaData().getColumns(null, null, "students", "is_active");
+            if (!rs.next()) {
+                // Column doesn't exist, add it
+                stmt.executeUpdate("ALTER TABLE students ADD COLUMN is_active BOOLEAN DEFAULT TRUE");
+                System.out.println("Added is_active column to students table");
+            }
+            rs.close();
+
+            // Set all existing students to active (where is_active is null)
+            stmt.executeUpdate("UPDATE students SET is_active = TRUE WHERE is_active IS NULL");
+
+            // Check if student_id column exists in reports table
+            rs = conn.getMetaData().getColumns(null, null, "reports", "student_id");
+            if (!rs.next()) {
+                // Column doesn't exist, add it
+                stmt.executeUpdate("ALTER TABLE reports ADD COLUMN student_id BIGINT");
+                System.out.println("Added student_id column to reports table");
+            }
+            rs.close();
 
             System.out.println("Successfully migrated tenant database: " + jdbcUrl);
 
