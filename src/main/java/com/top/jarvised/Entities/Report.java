@@ -24,6 +24,7 @@ public class Report {
     private String reportedByName;
     private Long reportedById;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
     private Student student;
