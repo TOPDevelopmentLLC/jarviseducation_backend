@@ -304,33 +304,56 @@ public class TenantProvisioningService {
     public void migrateTenantDatabase(School school) {
         String jdbcUrl = school.getDbUrl();
 
+        // Extract database name from JDBC URL for metadata queries
+        String dbName = jdbcUrl.substring(jdbcUrl.lastIndexOf('/') + 1);
+        // Remove any query parameters if present
+        if (dbName.contains("?")) {
+            dbName = dbName.substring(0, dbName.indexOf('?'));
+        }
+
         try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUsername, dbPassword);
              Statement stmt = conn.createStatement()) {
 
+            System.out.println("Migrating database: " + dbName);
+
             // Check if is_active column exists in students table
-            ResultSet rs = conn.getMetaData().getColumns(null, null, "students", "is_active");
-            if (!rs.next()) {
+            // Using catalog (database name) for proper MySQL metadata lookup
+            ResultSet rs = conn.getMetaData().getColumns(dbName, null, "students", "is_active");
+            boolean isActiveExists = rs.next();
+            rs.close();
+
+            if (!isActiveExists) {
                 // Column doesn't exist, add it
                 stmt.executeUpdate("ALTER TABLE students ADD COLUMN is_active BOOLEAN DEFAULT TRUE");
-                System.out.println("Added is_active column to students table");
+                System.out.println("Added is_active column to students table for " + dbName);
+            } else {
+                System.out.println("is_active column already exists in students table for " + dbName);
             }
-            rs.close();
 
             // Set all existing students to active (where is_active is null)
-            stmt.executeUpdate("UPDATE students SET is_active = TRUE WHERE is_active IS NULL");
+            int updated = stmt.executeUpdate("UPDATE students SET is_active = TRUE WHERE is_active IS NULL");
+            System.out.println("Updated " + updated + " students with null is_active to TRUE");
 
             // Check if student_id column exists in reports table
-            rs = conn.getMetaData().getColumns(null, null, "reports", "student_id");
-            if (!rs.next()) {
-                // Column doesn't exist, add it
-                stmt.executeUpdate("ALTER TABLE reports ADD COLUMN student_id BIGINT");
-                System.out.println("Added student_id column to reports table");
-            }
+            rs = conn.getMetaData().getColumns(dbName, null, "reports", "student_id");
+            boolean studentIdExists = rs.next();
             rs.close();
 
-            System.out.println("Successfully migrated tenant database: " + jdbcUrl);
+            if (!studentIdExists) {
+                // Column doesn't exist, add it
+                stmt.executeUpdate("ALTER TABLE reports ADD COLUMN student_id BIGINT");
+                System.out.println("Added student_id column to reports table for " + dbName);
+            } else {
+                System.out.println("student_id column already exists in reports table for " + dbName);
+            }
+
+            System.out.println("Successfully migrated tenant database: " + dbName);
 
         } catch (Exception e) {
+            System.err.println("Migration error for " + dbName + ": " + e.getClass().getName() + " - " + e.getMessage());
+            if (e.getCause() != null) {
+                System.err.println("Caused by: " + e.getCause().getClass().getName() + " - " + e.getCause().getMessage());
+            }
             throw new RuntimeException("Failed to migrate tenant database: " + jdbcUrl, e);
         }
     }
@@ -346,6 +369,8 @@ public class TenantProvisioningService {
                 migrateTenantDatabase(school);
             } catch (Exception e) {
                 System.err.println("Failed to migrate database for school " + school.getId() + ": " + e.getMessage());
+                // Print full stack trace for debugging
+                e.printStackTrace();
             }
         }
     }
