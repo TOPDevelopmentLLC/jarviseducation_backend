@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +18,6 @@ import com.top.jarvised.JwtUtil;
 import com.top.jarvised.SchoolContext;
 import com.top.jarvised.DTOs.StudentResponse;
 import com.top.jarvised.Entities.Student;
-import com.top.jarvised.Entities.UserAccount;
 import com.top.jarvised.Repositories.UserAccountRepository;
 import com.top.jarvised.Services.StudentService;
 
@@ -99,7 +99,7 @@ public class StudentController {
     }
 
     @DeleteMapping("/students/{id}")
-    public ResponseEntity<?> deleteStudent(
+    public ResponseEntity<?> deactivateStudent(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long id) {
         try {
@@ -109,12 +109,32 @@ public class StudentController {
             // Set school context for tenant DB
             SchoolContext.setSchool(schoolId.toString());
 
-            studentService.deleteStudent(id);
-            return ResponseEntity.ok(Map.of("message", "Student deleted successfully"));
+            studentService.deactivateStudent(id);
+            return ResponseEntity.ok(Map.of("message", "Student deactivated successfully"));
 
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                .body(Map.of("error", "Failed to delete student: " + e.getMessage()));
+                .body(Map.of("error", "Failed to deactivate student: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/students/{id}/reactivate")
+    public ResponseEntity<?> reactivateStudent(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long id) {
+        try {
+            String token = authHeader.replace("Bearer ", "");
+            Long schoolId = jwtUtil.extractSchoolId(token);
+
+            // Set school context for tenant DB
+            SchoolContext.setSchool(schoolId.toString());
+
+            studentService.reactivateStudent(id);
+            return ResponseEntity.ok(Map.of("message", "Student reactivated successfully"));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Failed to reactivate student: " + e.getMessage()));
         }
     }
 

@@ -24,17 +24,22 @@ public class Report {
     private String reportedByName;
     private Long reportedById;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id")
+    private Student student;
+
     @JsonIgnore
     @OneToMany(mappedBy = "report", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
     public Report() {}
 
-    public Report(ReportType reportType, String description, String reportedByName, Long reportedById, @Nullable MoodType moodType) {
+    public Report(ReportType reportType, String description, String reportedByName, Long reportedById, @Nullable MoodType moodType, Student student) {
         this.reportType = reportType;
         this.description = description;
         this.reportedByName = reportedByName;
         this.reportedById = reportedById;
+        this.student = student;
         if (reportType == ReportType.Mood) {
             this.moodType = moodType;
         } else {
@@ -59,6 +64,14 @@ public class Report {
     }
     public Long getReportedById() {
         return this.reportedById;
+    }
+
+    public Student getStudent() {
+        return this.student;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
     }
 
     public List<Comment> getComments() {

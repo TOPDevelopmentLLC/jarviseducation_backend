@@ -9,16 +9,18 @@ public class CreateReportRequest {
     private MoodType moodType;
     private String reportedByName;
     private Long reportedById;
+    private Long studentId;
 
     public CreateReportRequest() {}
 
     public CreateReportRequest(ReportType reportType, String description, String reportedByName,
-                              Long reportedById, MoodType moodType) {
+                              Long reportedById, MoodType moodType, Long studentId) {
         this.reportType = reportType;
         this.description = description;
         this.reportedByName = reportedByName;
         this.reportedById = reportedById;
         this.moodType = moodType;
+        this.studentId = studentId;
     }
 
     public ReportType getReportType() {
@@ -59,5 +61,13 @@ public class CreateReportRequest {
 
     public void setReportedById(Long reportedById) {
         this.reportedById = reportedById;
+    }
+
+    public Long getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
     }
 }

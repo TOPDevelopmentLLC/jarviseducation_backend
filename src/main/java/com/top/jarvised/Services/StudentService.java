@@ -48,7 +48,7 @@ public class StudentService {
         // Force set context right before query to ensure routing happens correctly
         SchoolContext.setSchool(schoolId.toString());
         System.out.println("[DEBUG] StudentService.getAllStudents - SchoolContext: " + SchoolContext.getSchool());
-        List<Student> students = studentRepository.findAll();
+        List<Student> students = studentRepository.findByIsActiveTrue();
         System.out.println("[DEBUG] StudentService.getAllStudents - found " + students.size() + " raw students");
         Integer studentPoints = calculateStudentPoints(schoolId, userAccountId);
 
@@ -113,11 +113,27 @@ public class StudentService {
         return studentRepository.save(student);
     }
 
-    public void deleteStudent(Long id) {
-        if (!studentRepository.existsById(id)) {
-            throw new RuntimeException("Student not found with id: " + id);
-        }
-        studentRepository.deleteById(id);
+    /**
+     * Soft delete a student by marking them as inactive.
+     * This preserves the student record and their associated reports.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void deactivateStudent(Long id) {
+        Student student = studentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+        student.setActive(false);
+        studentRepository.save(student);
+    }
+
+    /**
+     * Reactivate a previously deactivated student.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void reactivateStudent(Long id) {
+        Student student = studentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+        student.setActive(true);
+        studentRepository.save(student);
     }
 
     /**

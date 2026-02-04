@@ -1,6 +1,7 @@
 package com.top.jarvised.Enums;
 
 public enum ReportType {
+    ABC ("ABC"),
     Attendance ("Attendance"),
     Behavior ("Behavior"),
     Conflict ("Conflict"),
@@ -22,6 +23,8 @@ public enum ReportType {
 
     public ReportType getReportTypeFromString(String value) {
         switch (value) {
+            case "ABC":
+                return ReportType.ABC;
             case "Attendance":
                 return ReportType.Attendance;
             case "Behavior":
