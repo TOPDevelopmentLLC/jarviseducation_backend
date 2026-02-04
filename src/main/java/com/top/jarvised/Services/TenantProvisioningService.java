@@ -3,6 +3,7 @@ package com.top.jarvised.Services;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -293,6 +294,58 @@ public class TenantProvisioningService {
 
         // Limit to 50 characters using the sanitized length
         return sanitized.substring(0, Math.min(sanitized.length(), 50));
+    }
+
+    /**
+     * Migrates an existing tenant database to add new columns.
+     * This is idempotent - safe to run multiple times.
+     */
+    public void migrateTenantDatabase(School school) {
+        String jdbcUrl = school.getDbUrl();
+
+        // Migration statements - these use IF NOT EXISTS or check before adding
+        String addIsActiveToStudents = """
+            ALTER TABLE students ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE
+            """;
+
+        String setExistingStudentsActive = """
+            UPDATE students SET is_active = TRUE WHERE is_active IS NULL
+            """;
+
+        String addStudentIdToReports = """
+            ALTER TABLE reports ADD COLUMN IF NOT EXISTS student_id BIGINT
+            """;
+
+        try (Connection conn = DriverManager.getConnection(jdbcUrl, dbUsername, dbPassword);
+             Statement stmt = conn.createStatement()) {
+
+            // Add is_active column to students table
+            stmt.executeUpdate(addIsActiveToStudents);
+            // Set all existing students to active
+            stmt.executeUpdate(setExistingStudentsActive);
+            // Add student_id column to reports table
+            stmt.executeUpdate(addStudentIdToReports);
+
+            System.out.println("Successfully migrated tenant database: " + jdbcUrl);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to migrate tenant database: " + jdbcUrl, e);
+        }
+    }
+
+    /**
+     * Migrates all existing tenant databases.
+     * Call this on application startup or via an admin endpoint.
+     */
+    public void migrateAllTenantDatabases() {
+        List<School> schools = schoolRepository.findAll();
+        for (School school : schools) {
+            try {
+                migrateTenantDatabase(school);
+            } catch (Exception e) {
+                System.err.println("Failed to migrate database for school " + school.getId() + ": " + e.getMessage());
+            }
+        }
     }
 
     /**
